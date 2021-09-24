@@ -1,5 +1,11 @@
 ---
 - job:
+  name: terraform-functional
+  parent: golang-make-functional
+  pre-run: playbooks/infra-pre.yaml
+  post-run: playbooks/infra-post.yaml
+
+- job:
     name: tflint
     parent: golang-make
     vars:
@@ -20,6 +26,9 @@
         - tflint
         - goreleaser-build:
             nodeset: fedora-32-large
+    check-post:
+      jobs:
+        - terraform-functional
     gate:
       jobs:
         - golangci-lint:
