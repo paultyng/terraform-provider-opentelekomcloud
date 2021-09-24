@@ -1,0 +1,11 @@
+- hosts: localhost
+  roles:
+    - ensure-terraform
+    - role: terraform
+        vars:
+          terraform_command: "init"
+          zuul_work_dir: "{{ zuul.project.src_dir }}/infrastructure/"
+    - role: terraform
+        vars:
+          terraform_command: "destroy"
+          zuul_work_dir: "{{ zuul.project.src_dir }}/infrastructure/"
