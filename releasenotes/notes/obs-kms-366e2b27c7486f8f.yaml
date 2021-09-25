@@ -1,0 +1,50 @@
+---
+issues:
+  - |
+    Fix not encrypting OBS bucket with `kms` algorythm (`#1180 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/1180>`_)
+upgrade:
+  - |
+    S3-compatibility is broken for OBS resources. SSE stop supporting `aws:kms` algorythm. Rules passed to `opentelekomcloud_obs_bucket_policy`
+    should be OBS-specififc, e.g.
+    .. code-block:: JSON
+        {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "ID": [
+                  "*"
+                ]
+              },
+              "Action": [
+                "*"
+              ],
+              "Resource": [
+                "tf-test-bucket-2185738448437901391",
+                "tf-test-bucket-2185738448437901391/*"
+              ]
+            }
+          ]
+        }
+    instead of S3-compatible
+    .. code-block:: JSON
+        {
+          "Version": "2008-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  "*"
+                ]
+              },
+              "Action": [
+                "s3:*"
+              ],
+              "Resource": [
+                "arn:aws:s3:::tf-test-bucket-2185738448437901391/*",
+                "arn:aws:s3:::tf-test-bucket-2185738448437901391"
+              ]
+            }
+          ]
+        }

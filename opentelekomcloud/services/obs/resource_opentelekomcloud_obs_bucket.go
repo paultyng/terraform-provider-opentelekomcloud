@@ -260,7 +260,7 @@ func ResourceObsBucket() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 							ValidateDiagFunc: validation.ToDiagFunc(
-								validation.StringInSlice([]string{"aws:kms"}, false),
+								validation.StringInSlice([]string{"kms"}, false),
 							),
 						},
 					},

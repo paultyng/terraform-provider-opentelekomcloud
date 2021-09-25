@@ -102,7 +102,7 @@ resource "opentelekomcloud_obs_bucket" "bucket" {
   acl           = "public-read"
 
   server_side_encryption {
-    algorithm  = "aws:kms"
+    algorithm  = "kms"
     kms_key_id = var.kms_master_key_id
   }
 }
@@ -357,7 +357,7 @@ The `noncurrent_version_transition` object supports the following
 
 The `server_side_encryption` object supports the following
 
-* `algorithm` - (Required) The algorithm used for SSE. Only `aws:kms` is supported.
+* `algorithm` - (Required) The algorithm used for SSE. Only `kms` is supported.
 
 * `kms_key_id` - (Required) The ID of KMS key used for the encryption.
 

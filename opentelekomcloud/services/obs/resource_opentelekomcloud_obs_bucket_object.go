@@ -103,8 +103,7 @@ func resourceObsBucketObjectPut(ctx context.Context, d *schema.ResourceData, met
 
 	if source, ok := d.GetOk("source"); ok {
 		// check source file whether exist
-		_, err := os.Stat(source.(string))
-		if err != nil {
+		if _, err := os.Stat(source.(string)); err != nil {
 			if os.IsNotExist(err) {
 				return fmterr.Errorf("source file %s does not exist", source)
 			}
@@ -164,11 +163,11 @@ func basicInput(d *schema.ResourceData) obs.PutObjectBasicInput {
 	if v, ok := d.GetOk("content_type"); ok {
 		common.ContentType = v.(string)
 	}
-	var sseKmsHeader = obs.SseKmsHeader{}
 	if d.Get("encryption").(bool) {
-		sseKmsHeader.Encryption = obs.DEFAULT_SSE_KMS_ENCRYPTION
-		sseKmsHeader.Key = d.Get("kms_key_id").(string)
-		common.SseHeader = sseKmsHeader
+		common.SseHeader = obs.SseKmsHeader{
+			Encryption: obs.DEFAULT_SSE_KMS_ENCRYPTION_OBS,
+			Key:        d.Get("kms_key_id").(string),
+		}
 	}
 	return common
 }

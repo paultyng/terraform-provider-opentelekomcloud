@@ -256,8 +256,9 @@ resource "opentelekomcloud_obs_bucket_object" "object" {
   source       = "%s"
   content_type = "binary/octet-stream"
   encryption   = true
+  kms_key_id   = "%s"
 }
-`, randInt, source)
+`, randInt, source, os.Getenv("OS_KMS_ID"))
 }
 
 func testAccObsBucketObject_configWithContent(randInt int) string {
