@@ -74,7 +74,7 @@ func ResourceDdmInstanceV1() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"availability_zone": {
+			"availability_zones": {
 				Type:     schema.TypeList,
 				Required: true,
 				ForceNew: true,
@@ -170,6 +170,10 @@ func ResourceDdmInstanceV1() *schema.Resource {
 					},
 				},
 			},
+			"availability_zone": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -210,7 +214,7 @@ func resourceDdmInstanceV1Create(ctx context.Context, d *schema.ResourceData, me
 	d.SetId(ddmInstance.Id)
 
 	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"CREATE", "CREATING"},
+		Pending:    []string{"CREATE", "CREATING", "SET_CONFIGURATION", "RESTARTING"},
 		Target:     []string{"RUNNING"},
 		Refresh:    instanceStateRefreshFunc(client, d.Id()),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
@@ -251,7 +255,7 @@ func resourceDdmInstanceV1Read(ctx context.Context, d *schema.ResourceData, meta
 		d.Set("subnet_id", instance.SubnetId),
 		d.Set("security_group_id", instance.SecurityGroupId),
 		d.Set("username", instance.AdminUserName),
-		d.Set("availability_zone", []string{instance.AvailableZone}),
+		d.Set("availability_zone", instance.AvailableZone),
 		d.Set("node_num", instance.NodeCount),
 		d.Set("access_ip", instance.AccessIp),
 		d.Set("access_port", instance.AccessPort),
@@ -291,7 +295,7 @@ func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	clientV2, err := common.ClientFromCtx(ctx, keyClientV2, func() (*golangsdk.ServiceClient, error) {
-		return config.DdmV1Client(config.GetRegion(d))
+		return config.DdmV2Client(config.GetRegion(d))
 	})
 	if err != nil {
 		return fmterr.Errorf(errCreationV2Client, err)
@@ -300,6 +304,7 @@ func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, me
 	if d.HasChange("name") {
 		_, newNameRaw := d.GetChange("name")
 		newName := newNameRaw.(string)
+		log.Printf("[DEBUG] Renaming instance %s: %s", d.Id(), newName)
 		_, err = ddmv1instances.Rename(clientV1, d.Id(), newName)
 		if err != nil {
 			return fmterr.Errorf("error renaming DDM instance: %w", err)
@@ -307,11 +312,24 @@ func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	if d.HasChange("node_num") {
-		err = resourceDDMScaling(clientV2, d)
+		err = resourceDDMScaling(clientV1, clientV2, d, ctx)
 		if err != nil {
 			return fmterr.Errorf("error in DDM instance scaling: %w", err)
 		}
 	}
+
+	if d.HasChange("security_group_id") {
+		_, newSecGroupRaw := d.GetChange("security_group_id")
+		newSecGroup := newSecGroupRaw.(string)
+		modifySecurityGroupOpts := ddmv1instances.ModifySecurityGroupOpts{
+			SecurityGroupId: newSecGroup,
+		}
+		_, err := ddmv1instances.ModifySecurityGroup(clientV1, d.Id(), modifySecurityGroupOpts)
+		if err != nil {
+			return fmterr.Errorf("error modifying DDM instance security group: %w", err)
+		}
+	}
+
 	clientCtx := common.CtxWithClient(ctx, clientV1, keyClientV1)
 	return resourceDdmInstanceV1Read(clientCtx, d, meta)
 }
@@ -331,20 +349,6 @@ func resourceDdmInstanceV1Delete(ctx context.Context, d *schema.ResourceData, me
 	_, err = ddmv1instances.Delete(client, d.Id(), deleteRdsData)
 	if err != nil {
 		return fmterr.Errorf("error deleting OpenTelekomCloud RDSv3 instance: %s", err)
-	}
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"RUNNING", "DELETING"},
-		Target:     []string{"DELETED"},
-		Refresh:    instanceStateRefreshFunc(client, d.Id()),
-		Timeout:    d.Timeout(schema.TimeoutCreate),
-		Delay:      15 * time.Second,
-		MinTimeout: 10 * time.Second,
-	}
-
-	_, err = stateConf.WaitForStateContext(ctx)
-	if err != nil {
-		return fmterr.Errorf("error waiting for instance (%s) to get deleted: %w", d.Id(), err)
 	}
 
 	d.SetId("")
@@ -409,7 +413,7 @@ func isValidUsername(v interface{}, k string) (ws []string, errors []error) {
 }
 
 func resourceDDMAvailabilityZones(d *schema.ResourceData) []string {
-	azRaw := d.Get("availability_zone").([]interface{})
+	azRaw := d.Get("availability_zones").([]interface{})
 	zones := make([]string, 0)
 	for _, v := range azRaw {
 		zones = append(zones, v.(string))
@@ -417,7 +421,7 @@ func resourceDDMAvailabilityZones(d *schema.ResourceData) []string {
 	return zones
 }
 
-func resourceDDMScaling(client *golangsdk.ServiceClient, d *schema.ResourceData) error {
+func resourceDDMScaling(clientV1 *golangsdk.ServiceClient, clientV2 *golangsdk.ServiceClient, d *schema.ResourceData, ctx context.Context) error {
 	oldNodeNumRaw, newNodeNumRaw := d.GetChange("node_num")
 	oldNodeNum := oldNodeNumRaw.(int)
 	newNodeNum := newNodeNumRaw.(int)
@@ -427,9 +431,22 @@ func resourceDDMScaling(client *golangsdk.ServiceClient, d *schema.ResourceData)
 			FlavorId:   d.Get("flavor_id").(string),
 			NodeNumber: newNodeNum - oldNodeNum,
 		}
-		_, err := ddmv2instances.ScaleOut(client, d.Id(), scaleOutOpts)
+		_, err := ddmv2instances.ScaleOut(clientV2, d.Id(), scaleOutOpts)
 		if err != nil {
 			return fmt.Errorf("error scaling up DDM instance: %w", err)
+		}
+		stateConf := &resource.StateChangeConf{
+			Pending:    []string{"CREATING", "SET_CONFIGURATION", "RESTARTING", "GROWING"},
+			Target:     []string{"RUNNING"},
+			Refresh:    instanceStateRefreshFunc(clientV1, d.Id()),
+			Timeout:    d.Timeout(schema.TimeoutCreate),
+			Delay:      15 * time.Second,
+			MinTimeout: 10 * time.Second,
+		}
+
+		_, err = stateConf.WaitForStateContext(ctx)
+		if err != nil {
+			return fmt.Errorf("error waiting for instance (%s) to become ready during scale up: %w", d.Id(), err)
 		}
 	} else {
 		log.Printf("[DEBUG] Scaling down Instance %s", d.Id())
@@ -439,9 +456,22 @@ func resourceDDMScaling(client *golangsdk.ServiceClient, d *schema.ResourceData)
 		scaleInOpts := ddmv2instances.ScaleInOpts{
 			NodeNumber: oldNodeNum - newNodeNum,
 		}
-		_, err := ddmv2instances.ScaleIn(client, d.Id(), scaleInOpts)
+		_, err := ddmv2instances.ScaleIn(clientV2, d.Id(), scaleInOpts)
 		if err != nil {
-			return fmt.Errorf("error scaling up DDM instance: %w", err)
+			return fmt.Errorf("error scaling down DDM instance: %w", err)
+		}
+		stateConf := &resource.StateChangeConf{
+			Pending:    []string{"CREATING", "SET_CONFIGURATION", "RESTARTING", "REDUCING"},
+			Target:     []string{"RUNNING"},
+			Refresh:    instanceStateRefreshFunc(clientV1, d.Id()),
+			Timeout:    d.Timeout(schema.TimeoutCreate),
+			Delay:      15 * time.Second,
+			MinTimeout: 10 * time.Second,
+		}
+
+		_, err = stateConf.WaitForStateContext(ctx)
+		if err != nil {
+			return fmt.Errorf("error waiting for instance (%s) to become ready during scale down: %w", d.Id(), err)
 		}
 	}
 	return nil
