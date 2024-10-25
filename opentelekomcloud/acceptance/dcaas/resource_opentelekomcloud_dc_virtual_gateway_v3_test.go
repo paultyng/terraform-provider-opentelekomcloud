@@ -95,7 +95,7 @@ func testAccVirtualGatewayV3_update(name string) string {
 %s
 
 resource "opentelekomcloud_dc_virtual_gateway_v3" "gw" {
-  vpc_id      = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
+  vpc_id = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   name   = "%s"
 
   local_ep_group = [
