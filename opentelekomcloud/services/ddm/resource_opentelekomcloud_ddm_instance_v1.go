@@ -257,6 +257,7 @@ func resourceDdmInstanceV1Read(ctx context.Context, d *schema.ResourceData, meta
 		d.Set("username", instance.AdminUserName),
 		d.Set("availability_zone", instance.AvailableZone),
 		d.Set("node_num", instance.NodeCount),
+		d.Set("purge_rds_on_delete", d.Get("purge_rds_on_delete").(bool)),
 		d.Set("access_ip", instance.AccessIp),
 		d.Set("access_port", instance.AccessPort),
 		d.Set("node_status", instance.NodeStatus),
@@ -301,6 +302,13 @@ func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, me
 		return fmterr.Errorf(errCreationV2Client, err)
 	}
 
+	if d.HasChange("node_num") {
+		err = resourceDDMScaling(clientV1, clientV2, d, ctx)
+		if err != nil {
+			return fmterr.Errorf("error in DDM instance scaling: %w", err)
+		}
+	}
+
 	if d.HasChange("name") {
 		_, newNameRaw := d.GetChange("name")
 		newName := newNameRaw.(string)
@@ -308,13 +316,6 @@ func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, me
 		_, err = ddmv1instances.Rename(clientV1, d.Id(), newName)
 		if err != nil {
 			return fmterr.Errorf("error renaming DDM instance: %w", err)
-		}
-	}
-
-	if d.HasChange("node_num") {
-		err = resourceDDMScaling(clientV1, clientV2, d, ctx)
-		if err != nil {
-			return fmterr.Errorf("error in DDM instance scaling: %w", err)
 		}
 	}
 
