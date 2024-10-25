@@ -115,8 +115,8 @@ In addition to all arguments above, the following attributes are exported:
 
 ## Import
 
-The recorder can be imported using **any string** as the resource ID, e.g.
+The recorder can be imported by providing `domain_id` as resource ID, e.g.
 
 ```bash
-$ terraform import opentelekomcloud_rms_resource_recorder_v1.test recorder
+$ terraform import opentelekomcloud_rms_resource_recorder_v1.test domain_id
 ```
