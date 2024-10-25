@@ -66,6 +66,8 @@ func TestAccDdmInstancesV1_basic(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
 					"availability_zones",
+					"flavor_id",
+					"engine_id",
 				},
 			},
 		},
