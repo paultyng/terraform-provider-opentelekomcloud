@@ -4,12 +4,14 @@ layout: "opentelekomcloud"
 page_title: "OpenTelekomCloud: opentelekomcloud_dc_hosted_connect_v3"
 sidebar_current: "docs-opentelekomcloud-resource-dc-hosted-connect-v3"
 description: |-
-Manages a Direct Hosted Connect resource within OpenTelekomCloud.
+Manages a Direct Connect Hosted Connection resource within OpenTelekomCloud.
 ---
 
 # opentelekomcloud_dc_hosted_connect_v3
 
-Manages a hosted connection resource within HuaweiCloud.
+Manages a hosted connection resource within OpenTelekomCloud.
+
+-> **NOTE:** Direct Connect v3 API that are used in this resource officially supported only on SwissCloud now.
 
 ## Example Usage
 
