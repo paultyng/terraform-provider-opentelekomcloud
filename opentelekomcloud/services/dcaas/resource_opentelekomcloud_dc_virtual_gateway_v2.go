@@ -169,7 +169,7 @@ func resourceVirtualGatewayV2Create(ctx context.Context, d *schema.ResourceData,
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	eg, egV6, err := resourceLocalEgCreate(client, d)
@@ -212,7 +212,7 @@ func resourceVirtualGatewayV2Read(ctx context.Context, d *schema.ResourceData, m
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	vg, err := virtual_gateway.Get(client, d.Id())
@@ -252,7 +252,7 @@ func resourceVirtualGatewayV2Update(ctx context.Context, d *schema.ResourceData,
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	if d.HasChange("local_ep_group") {
@@ -288,7 +288,7 @@ func resourceVirtualGatewayV2Delete(ctx context.Context, d *schema.ResourceData,
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	vg, err := virtual_gateway.Get(client, d.Id())

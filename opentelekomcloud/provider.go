@@ -43,6 +43,7 @@ import (
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/nat"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/obs"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/rds"
+	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/rms"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/rts"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/s3"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/sdrs"
@@ -410,6 +411,8 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_dc_endpoint_group_v2":                      dcaas.ResourceDCEndpointGroupV2(),
 			"opentelekomcloud_dc_virtual_interface_v2":                   dcaas.ResourceVirtualInterfaceV2(),
 			"opentelekomcloud_dc_virtual_gateway_v2":                     dcaas.ResourceVirtualGatewayV2(),
+			"opentelekomcloud_dc_hosted_connect_v3":                      dcaas.ResourceHostedConnectV3(),
+			"opentelekomcloud_dc_virtual_gateway_v3":                     dcaas.ResourceVirtualGatewayV3(),
 			"opentelekomcloud_dcs_instance_v1":                           dcs.ResourceDcsInstanceV1(),
 			"opentelekomcloud_dcs_instance_v2":                           dcs.ResourceDcsInstanceV2(),
 			"opentelekomcloud_ddm_instance_v1":                           ddm.ResourceDdmInstanceV1(),
@@ -524,6 +527,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_rds_maintenance_v3":                        rds.ResourceRdsMaintenanceV3(),
 			"opentelekomcloud_rds_parametergroup_v3":                     rds.ResourceRdsConfigurationV3(),
 			"opentelekomcloud_rds_read_replica_v3":                       rds.ResourceRdsReadReplicaV3(),
+			"opentelekomcloud_rms_resource_recorder_v1":                  rms.ResourceRmsResourceRecorderV1(),
 			"opentelekomcloud_rts_software_deployment_v1":                rts.ResourceRtsSoftwareDeploymentV1(),
 			"opentelekomcloud_rts_software_config_v1":                    rts.ResourceSoftwareConfigV1(),
 			"opentelekomcloud_rts_stack_v1":                              rts.ResourceRTSStackV1(),

@@ -238,7 +238,7 @@ func resourceDirectConnectV2Create(ctx context.Context, d *schema.ResourceData, 
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	createOpts := dcaas.CreateOpts{
@@ -278,7 +278,7 @@ func resourceDirectConnectV2Update(ctx context.Context, d *schema.ResourceData, 
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	if d.HasChange("name") {
@@ -331,7 +331,7 @@ func resourceDirectConnectV2Read(ctx context.Context, d *schema.ResourceData, me
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	directConnect, err := dcaas.Get(client, d.Id())
@@ -395,7 +395,7 @@ func resourceDirectConnectV2Delete(ctx context.Context, d *schema.ResourceData, 
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	err = dcaas.Delete(client, d.Id())

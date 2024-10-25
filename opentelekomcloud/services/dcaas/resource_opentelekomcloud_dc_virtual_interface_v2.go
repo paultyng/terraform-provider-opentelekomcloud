@@ -205,7 +205,7 @@ func resourceVirtualInterfaceV2Create(ctx context.Context, d *schema.ResourceDat
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	eg, err := resourceRemoteEgCreate(client, d)
@@ -246,7 +246,7 @@ func resourceVirtualInterfaceV2Read(ctx context.Context, d *schema.ResourceData,
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	vi, err := virtual_interface.Get(client, d.Id())
@@ -306,7 +306,7 @@ func resourceVirtualInterfaceV2Update(ctx context.Context, d *schema.ResourceDat
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	if d.HasChange("remote_ep_group") {
@@ -357,7 +357,7 @@ func resourceVirtualInterfaceV2Delete(ctx context.Context, d *schema.ResourceDat
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	vi, err := virtual_interface.Get(client, d.Id())

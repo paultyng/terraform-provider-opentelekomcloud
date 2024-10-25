@@ -106,6 +106,12 @@ func TestAccPreCheck(t *testing.T) {
 	TestAccPreCheckRequiredEnvVars(t)
 }
 
+func TestAccPreCheckDcHostedConnection(t *testing.T) {
+	if env.OS_DC_HOSTING_ID == "" {
+		t.Skip("OS_DC_HOSTING_ID must be set for this acceptance test")
+	}
+}
+
 func TestAccPreCheckAdminOnly(t *testing.T) {
 	v := os.Getenv("OS_TENANT_ADMIN")
 	if v == "" {

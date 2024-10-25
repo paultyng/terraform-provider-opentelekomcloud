@@ -74,7 +74,7 @@ func resourceDCEndpointGroupV2Create(ctx context.Context, d *schema.ResourceData
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	createOpts := dceg.CreateOpts{
@@ -101,7 +101,7 @@ func resourceDCEndpointGroupV2Read(ctx context.Context, d *schema.ResourceData, 
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	eg, err := dceg.Get(client, d.Id())
@@ -129,7 +129,7 @@ func resourceDCEndpointGroupV2Delete(ctx context.Context, d *schema.ResourceData
 		return config.DCaaSV2Client(config.GetRegion(d))
 	})
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	err = dceg.Delete(client, d.Id())

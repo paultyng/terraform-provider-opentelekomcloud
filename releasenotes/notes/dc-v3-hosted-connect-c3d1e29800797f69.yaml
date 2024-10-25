@@ -1,0 +1,4 @@
+---
+features:
+  |
+  **[DCAAS]** Add new resource ``resource/opentelekomcloud_dc_hosted_connect_v3`` (`#2690 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2690>`_)

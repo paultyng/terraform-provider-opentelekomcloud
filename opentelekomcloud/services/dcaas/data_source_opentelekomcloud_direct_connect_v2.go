@@ -203,7 +203,7 @@ func dataSourceDirectConnectV2Read(_ context.Context, d *schema.ResourceData, me
 	config := meta.(*cfg.Config)
 	client, err := config.DCaaSV2Client(config.GetRegion(d))
 	if err != nil {
-		return fmterr.Errorf(errCreateClient, err)
+		return fmterr.Errorf(errCreateClientV2, err)
 	}
 
 	var ID string
