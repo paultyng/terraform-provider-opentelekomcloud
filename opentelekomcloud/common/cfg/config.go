@@ -1097,6 +1097,13 @@ func (c *Config) RdsV3Client(region string) (*golangsdk.ServiceClient, error) {
 	})
 }
 
+func (c *Config) RmsV1Client(region string) (*golangsdk.ServiceClient, error) {
+	return openstack.NewRmsServiceV1(c.HwClient, golangsdk.EndpointOpts{
+		Region:       region,
+		Availability: c.getEndpointType(),
+	})
+}
+
 func (c *Config) SdrsV1Client(region string) (*golangsdk.ServiceClient, error) {
 	return openstack.NewSDRSV1(c.HwClient, golangsdk.EndpointOpts{
 		Region:       region,

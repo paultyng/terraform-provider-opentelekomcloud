@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    **[RMS]** Add new resource ``resource/opentelekomcloud_rms_resource_recorder_v1`` (`#2693 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2693>`_)
