@@ -20,11 +20,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 
-	// "github.com/opentelekomcloud/gophertelekomcloud/openstack/common/tags"
 	ddmv1instances "github.com/opentelekomcloud/gophertelekomcloud/openstack/ddm/v1/instances"
 	ddmv2instances "github.com/opentelekomcloud/gophertelekomcloud/openstack/ddm/v2/instances"
 
-	// ddmv3instances "github.com/opentelekomcloud/gophertelekomcloud/openstack/ddm/v3/instances"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/ddm/v3/accounts"
 
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/cfg"
@@ -107,12 +106,14 @@ func ResourceDdmInstanceV1() *schema.Resource {
 			"time_zone": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				ForceNew:     true,
 				ValidateFunc: isValidUTCOffset,
 			},
 			"username": {
 				Type:         schema.TypeString,
 				Sensitive:    true,
 				Optional:     true,
+				ForceNew:     true,
 				ValidateFunc: isValidUsername,
 			},
 			"password": {
@@ -125,7 +126,6 @@ func ResourceDdmInstanceV1() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
-			"tags": common.TagsSchema(),
 			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -331,6 +331,24 @@ func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, me
 		}
 	}
 
+	if d.HasChange("password") {
+
+		clientV3, err := common.ClientFromCtx(ctx, keyClientV3, func() (*golangsdk.ServiceClient, error) {
+			return config.DdmV3Client(config.GetRegion(d))
+		})
+		if err != nil {
+			return fmterr.Errorf(errCreationV3Client, err)
+		}
+
+		_, err = accounts.ManageAdminPass(clientV3, d.Id(), accounts.ManageAdminPassOpts{
+			Name:     d.Get("username").(string),
+			Password: d.Get("password").(string),
+		})
+		if err != nil {
+			return fmterr.Errorf("error updating instance password: %w", err)
+		}
+	}
+
 	clientCtx := common.CtxWithClient(ctx, clientV1, keyClientV1)
 	return resourceDdmInstanceV1Read(clientCtx, d, meta)
 }
@@ -380,7 +398,7 @@ func isValidateName(v interface{}, k string) (ws []string, errors []error) {
 func isValidUTCOffset(v interface{}, k string) (ws []string, errors []error) {
 	value := v.(string)
 	// Regular expression pattern for matching UTC offsets from +12:00 to -12:00
-	pattern := `^UTC(?:(\+12:00|\-12:00)|([+-](0[0-9]|1[01]):([0-5][0-9])))$`
+	pattern := `^(UTC([+-](0[1-9]|1[0-2]):00)|UTC)$`
 
 	// Compile the regular expression
 	re := regexp.MustCompile(pattern)
