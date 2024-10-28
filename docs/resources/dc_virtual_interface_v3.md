@@ -4,7 +4,7 @@ layout: "opentelekomcloud"
 page_title: "OpenTelekomCloud: opentelekomcloud_dc_virtual_interface_v3"
 sidebar_current: "docs-opentelekomcloud-resource-dc-virtual-interface-v3"
 description: |-
-Manages a Direct Connect Virtual Interface v3 resource within OpenTelekomCloud.
+  Manages a Direct Connect Virtual Interface v3 resource within OpenTelekomCloud.
 ---
 
 
