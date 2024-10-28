@@ -12,6 +12,8 @@ Manages a Direct Connect Virtual Interface v3 resource within OpenTelekomCloud.
 
 Manages a virtual interface v3 resource within OpenTelekomCloud.
 
+-> **NOTE:** Direct Connect v3 API that are used in this resource officially supported only on SwissCloud now.
+
 ## Example Usage
 
 ```hcl
