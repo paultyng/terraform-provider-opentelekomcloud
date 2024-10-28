@@ -108,11 +108,7 @@ func resourceRecorderUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		return fmterr.Errorf(errCreationRMSV1Client, err)
 	}
 
-	domainID := client.DomainID
-
-	if domainID == "" {
-		domainID = config.DomainClient.AKSKAuthOptions.DomainID
-	}
+	domainID := GetRmsDomainId(client, config)
 
 	resTypesRaw := d.Get("selector.0.resource_types").(*schema.Set).List()
 
