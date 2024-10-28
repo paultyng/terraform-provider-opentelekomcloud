@@ -42,6 +42,7 @@ func TestAccDdmInstancesV1_basic(t *testing.T) {
 					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(ddmInstanceResourceName, "name", "ddm-instance"),
 					resource.TestCheckResourceAttr(ddmInstanceResourceName, "node_num", "2"),
+					resource.TestCheckResourceAttr(ddmInstanceResourceName, "username", "test_user"),
 				),
 			},
 			{
@@ -68,6 +69,10 @@ func TestAccDdmInstancesV1_basic(t *testing.T) {
 					"availability_zones",
 					"flavor_id",
 					"engine_id",
+					"time_zone",
+					"password",
+					"param_group_id",
+					"purge_rds_on_delete",
 				},
 			},
 		},
@@ -88,6 +93,9 @@ resource "opentelekomcloud_ddm_instance_v1" "instance_1" {
   vpc_id            = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id         = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
+  time_zone = "UTC+01:00"
+  username = "test_user"
+  password = "test!-acc-Password-V1!"
 }
 `, common.DataSourceSubnet, common.DataSourceSecGroupDefault, env.OS_AVAILABILITY_ZONE)
 
@@ -105,6 +113,9 @@ resource "opentelekomcloud_ddm_instance_v1" "instance_1" {
   vpc_id            = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id         = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
+  time_zone = "UTC+01:00"
+  username = "test_user"
+  password = "test!-acc-Password-V1!"
 }
 `, common.DataSourceSubnet, common.DataSourceSecGroupDefault, env.OS_AVAILABILITY_ZONE)
 
@@ -122,5 +133,9 @@ resource "opentelekomcloud_ddm_instance_v1" "instance_1" {
   vpc_id            = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id         = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
+  time_zone = "UTC+01:00"
+  username = "test_user"
+  password = "test!-acc-Password-V2!"
+  purge_rds_on_delete = true
 }
 `, common.DataSourceSubnet, common.DataSourceSecGroupDefault, env.OS_AVAILABILITY_ZONE)
