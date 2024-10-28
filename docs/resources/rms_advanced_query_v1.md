@@ -2,7 +2,7 @@
 subcategory: "Config"
 layout: "opentelekomcloud"
 page_title: "OpenTelekomCloud: opentelekomcloud_rms_advanced_query_v1"
-sidebar_current: "docs-opentelekomcloud-rms_advanced_query-v1"
+sidebar_current: "docs-opentelekomcloud-rms-advanced-query-v1"
 description: |-
   Manages an RMS Advanced query resource within OpenTelekomCloud.
 ---
