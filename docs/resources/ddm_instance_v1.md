@@ -159,8 +159,10 @@ terraform import opentelekomcloud_ddm_instance_v1.instance_1 c1851195-cdcb-4d23-
 ```
 
 Following attributes are not properly imported.
-* availability_zones
-* flavor_id
-* engine_id
-* time_zone
-* password
+* `availability_zones`
+* `flavor_id`
+* `engine_id`
+* `time_zone`
+* `password`
+* `param_group_id`
+* `purge_rds_on_delete`
