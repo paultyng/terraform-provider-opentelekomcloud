@@ -1,9 +1,10 @@
 ---
 subcategory: "Config"
 layout: "opentelekomcloud"
-page_title: "OpenTelekomCloud: opentelekomcloud_resource_recorder_v1"
-sidebar_current: "docs-opentelekomcloud-resource-recorder-v1"
-description: ""
+page_title: "OpenTelekomCloud: opentelekomcloud_rms_resource_recorder_v1"
+sidebar_current: "docs-opentelekomcloud-rms-resource-recorder-v1"
+description: |-
+  Manages an RMS Resource Recorder within OpenTelekomCloud.
 ---
 
 Up-to-date reference of API arguments for RMS Resource Recorder you can get at
