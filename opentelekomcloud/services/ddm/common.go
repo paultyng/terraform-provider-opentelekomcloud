@@ -17,7 +17,6 @@ const (
 
 func instanceStateRefreshFunc(client *golangsdk.ServiceClient, instanceID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-
 		instanceList, err := ddmv1instances.QueryInstances(client, ddmv1instances.QueryInstancesOpts{})
 		if err != nil {
 			return nil, "Error retrieving DDM v1 Instances", err

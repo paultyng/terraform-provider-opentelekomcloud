@@ -23,14 +23,14 @@ variable "subnet_id" {}
 variable "security_group_id" {}
 
 resource "opentelekomcloud_ddm_instance_v1" "instance_1" {
-  name              = "ddm-instance"
-  availability_zones = ["eu-de-01", "eu-de-02", "eu-de-03"]
-  flavor_id         = var.flavor_id
-  node_num          = 2
-  engine_id         = var.engine_id
-  vpc_id            = var.vpc_id
-  subnet_id         = var.subnet_id
-  security_group_id = var.security_group.id
+  name                = "ddm-instance"
+  availability_zones  = ["eu-de-01", "eu-de-02", "eu-de-03"]
+  flavor_id           = var.flavor_id
+  node_num            = 2
+  engine_id           = var.engine_id
+  vpc_id              = var.vpc_id
+  subnet_id           = var.subnet_id
+  security_group_id   = var.security_group.id
   purge_rds_on_delete = true
 }
 ```
@@ -46,17 +46,17 @@ variable "username" {}
 variable "password" {}
 
 resource "opentelekomcloud_ddm_instance_v1" "instance_1" {
-  name              = "ddm-instance"
-  availability_zones = ["eu-de-01", "eu-de-02", "eu-de-03"]
-  flavor_id         = var.flavor_id
-  node_num          = 2
-  engine_id         = var.engine_id
-  vpc_id            = var.vpc_id
-  subnet_id         = var.subnet_id
-  security_group_id = var.security_group.id
+  name                = "ddm-instance"
+  availability_zones  = ["eu-de-01", "eu-de-02", "eu-de-03"]
+  flavor_id           = var.flavor_id
+  node_num            = 2
+  engine_id           = var.engine_id
+  vpc_id              = var.vpc_id
+  subnet_id           = var.subnet_id
+  security_group_id   = var.security_group.id
   purge_rds_on_delete = true
-  username = var.username
-  password = var.password  
+  username            = var.username
+  password            = var.password
 }
 ```
 
@@ -69,16 +69,16 @@ variable "subnet_id" {}
 variable "security_group_id" {}
 
 resource "opentelekomcloud_ddm_instance_v1" "instance_1" {
-  name              = "ddm-instance"
-  availability_zones = ["eu-de-01", "eu-de-02", "eu-de-03"]
-  flavor_id         = var.flavor_id
-  node_num          = 2
-  engine_id         = var.engine_id
-  vpc_id            = var.vpc_id
-  subnet_id         = var.subnet_id
-  security_group_id = var.security_group.id
+  name                = "ddm-instance"
+  availability_zones  = ["eu-de-01", "eu-de-02", "eu-de-03"]
+  flavor_id           = var.flavor_id
+  node_num            = 2
+  engine_id           = var.engine_id
+  vpc_id              = var.vpc_id
+  subnet_id           = var.subnet_id
+  security_group_id   = var.security_group.id
   purge_rds_on_delete = true
-  time_zone = "UTC+01:00"
+  time_zone           = "UTC+01:00"
 }
 ```
 

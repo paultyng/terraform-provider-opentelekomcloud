@@ -257,7 +257,6 @@ func resourceDdmInstanceV1Read(ctx context.Context, d *schema.ResourceData, meta
 		d.Set("username", instance.AdminUserName),
 		d.Set("availability_zone", instance.AvailableZone),
 		d.Set("node_num", instance.NodeCount),
-		d.Set("purge_rds_on_delete", d.Get("purge_rds_on_delete").(bool)),
 		d.Set("access_ip", instance.AccessIp),
 		d.Set("access_port", instance.AccessPort),
 		d.Set("node_status", instance.NodeStatus),
@@ -332,7 +331,6 @@ func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	if d.HasChange("password") {
-
 		clientV3, err := common.ClientFromCtx(ctx, keyClientV3, func() (*golangsdk.ServiceClient, error) {
 			return config.DdmV3Client(config.GetRegion(d))
 		})
