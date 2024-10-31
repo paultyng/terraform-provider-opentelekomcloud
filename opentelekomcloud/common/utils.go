@@ -547,3 +547,17 @@ func hasMapContain(rawMap map[string]string, filterKey, filterValue string) bool
 		return false
 	}
 }
+
+// StrSliceContainsAnother checks whether a string slice (b) contains another string slice (s).
+func StrSliceContainsAnother(b []string, s []string) bool {
+	// The empty set is the subset of any set.
+	if len(s) < 1 {
+		return true
+	}
+	for _, v := range s {
+		if !StrSliceContains(b, v) {
+			return false
+		}
+	}
+	return true
+}
