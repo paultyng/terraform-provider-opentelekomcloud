@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"strings"
-
-	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common"
 )
 
 const (
@@ -26,18 +24,4 @@ func MarshalValue(i interface{}) string {
 	}
 
 	return strings.Trim(string(jsonRaw), `"`)
-}
-
-// StrSliceContainsAnother checks whether a string slice (b) contains another string slice (s).
-func StrSliceContainsAnother(b []string, s []string) bool {
-	// The empty set is the subset of any set.
-	if len(s) < 1 {
-		return true
-	}
-	for _, v := range s {
-		if !common.StrSliceContains(b, v) {
-			return false
-		}
-	}
-	return true
 }

@@ -263,7 +263,7 @@ func filterFlavors(d *schema.ResourceData, flavorList []products.EngineProduct) 
 			if scOk && io.IOSpec != sc.(string) {
 				continue
 			}
-			if StrSliceContainsAnother(io.AvailableZones, common.ExpandToStringList(azs)) {
+			if common.StrSliceContainsAnother(io.AvailableZones, common.ExpandToStringList(azs)) {
 				validIOs = append(validIOs, io)
 			}
 		}
