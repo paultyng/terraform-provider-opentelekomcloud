@@ -4,13 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"unicode"
-
-	// "reflect"
-	// "sort"
-	// "strconv"
-	"regexp"
-	// "strings"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
@@ -48,16 +41,10 @@ func ResourceDdmInstanceV1() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"region": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
-			},
 			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: isValidateName,
+				ValidateFunc: common.ValidateDDMName,
 			},
 			"flavor_id": {
 				Type:     schema.TypeString,
@@ -107,14 +94,14 @@ func ResourceDdmInstanceV1() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: isValidUTCOffset,
+				ValidateFunc: common.ValidateUTCOffset,
 			},
 			"username": {
 				Type:         schema.TypeString,
 				Sensitive:    true,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: isValidUsername,
+				ValidateFunc: common.ValidateDDMUsername,
 			},
 			"password": {
 				Type:      schema.TypeString,
@@ -174,6 +161,10 @@ func ResourceDdmInstanceV1() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"region": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -207,7 +198,7 @@ func resourceDdmInstanceV1Create(ctx context.Context, d *schema.ResourceData, me
 
 	ddmInstance, err := ddmv1instances.Create(client, createOpts)
 	if err != nil {
-		return fmterr.Errorf("error getting instance from result: %w", err)
+		return fmterr.Errorf("error getting OpenTelekomCloud DDM instance from result: %w", err)
 	}
 	log.Printf("[DEBUG] Create instance %s: %#v", ddmInstance.Id, ddmInstance)
 
@@ -224,7 +215,7 @@ func resourceDdmInstanceV1Create(ctx context.Context, d *schema.ResourceData, me
 
 	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return fmterr.Errorf("error waiting for instance (%s) to become ready: %w", d.Id(), err)
+		return fmterr.Errorf("error waiting for OpenTelekomCloud DDM instance (%s) to become ready: %w", d.Id(), err)
 	}
 
 	clientCtx := common.CtxWithClient(ctx, client, keyClientV1)
@@ -279,10 +270,7 @@ func resourceDdmInstanceV1Read(ctx context.Context, d *schema.ResourceData, meta
 		d.Set("nodes", nodesList),
 	)
 
-	if err := mErr.ErrorOrNil(); err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return diag.FromErr(mErr.ErrorOrNil())
 }
 
 func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -304,7 +292,7 @@ func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, me
 	if d.HasChange("node_num") {
 		err = resourceDDMScaling(clientV1, clientV2, d, ctx)
 		if err != nil {
-			return fmterr.Errorf("error in DDM instance scaling: %w", err)
+			return fmterr.Errorf("error in OpenTelekomCloud DDM instance scaling: %w", err)
 		}
 	}
 
@@ -314,7 +302,7 @@ func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, me
 		log.Printf("[DEBUG] Renaming instance %s: %s", d.Id(), newName)
 		_, err = ddmv1instances.Rename(clientV1, d.Id(), newName)
 		if err != nil {
-			return fmterr.Errorf("error renaming DDM instance: %w", err)
+			return fmterr.Errorf("error renaming OpenTelekomCloud DDM instance: %w", err)
 		}
 	}
 
@@ -326,7 +314,7 @@ func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, me
 		}
 		_, err := ddmv1instances.ModifySecurityGroup(clientV1, d.Id(), modifySecurityGroupOpts)
 		if err != nil {
-			return fmterr.Errorf("error modifying DDM instance security group: %w", err)
+			return fmterr.Errorf("error modifying OpenTelekomCloud DDM instance security group: %w", err)
 		}
 	}
 
@@ -343,7 +331,7 @@ func resourceDdmInstanceV1Update(ctx context.Context, d *schema.ResourceData, me
 			Password: d.Get("password").(string),
 		})
 		if err != nil {
-			return fmterr.Errorf("error updating instance password: %w", err)
+			return fmterr.Errorf("error updating OpenTelekomCloud instance password: %w", err)
 		}
 	}
 
@@ -360,73 +348,16 @@ func resourceDdmInstanceV1Delete(ctx context.Context, d *schema.ResourceData, me
 		return fmterr.Errorf(errCreationV1Client, err)
 	}
 
-	log.Printf("[DEBUG] Deleting Instance %s", d.Id())
+	log.Printf("[DEBUG] Deleting OpenTelekomCloud DDM Instance %s", d.Id())
 
 	deleteRdsData := d.Get("purge_rds_on_delete").(bool)
 	_, err = ddmv1instances.Delete(client, d.Id(), deleteRdsData)
 	if err != nil {
-		return fmterr.Errorf("error deleting OpenTelekomCloud RDSv3 instance: %s", err)
+		return fmterr.Errorf("error deleting OpenTelekomCloud DDM instance: %s", err)
 	}
 
 	d.SetId("")
 	return nil
-}
-
-func isValidateName(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(string)
-	// Check length between 4 and 64
-	if len(value) > 64 || len(value) < 4 {
-		errors = append(errors, fmt.Errorf("%q must contain more than 4 and less than 64 characters", k))
-	}
-
-	// Check if contains invalid character
-	pattern := `^[\-A-Za-z0-9]+$`
-	if !regexp.MustCompile(pattern).MatchString(value) {
-		errors = append(errors, fmt.Errorf("only alphanumeric characters, and hyphens allowed in %q", k))
-	}
-
-	// Check if doesn't start with a letter
-	if !unicode.IsLetter(rune(value[0])) {
-		errors = append(errors, fmt.Errorf("%q must start with a letter", k))
-	}
-
-	return
-}
-
-func isValidUTCOffset(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(string)
-	// Regular expression pattern for matching UTC offsets from +12:00 to -12:00
-	pattern := `^(UTC([+-](0[1-9]|1[0-2]):00)|UTC)$`
-
-	// Compile the regular expression
-	re := regexp.MustCompile(pattern)
-	if !re.MatchString(value) {
-		errors = append(errors, fmt.Errorf("only valid utc offsets allowed in %q", k))
-	}
-
-	return
-}
-
-// Checks if the admin username is valid.
-func isValidUsername(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(string)
-	// Check length between 1 and 32
-	if len(value) > 32 || len(value) < 1 {
-		errors = append(errors, fmt.Errorf("%q must contain more than 1 and less than 32 characters", k))
-	}
-
-	// Check if contains invalid character
-	pattern := `^[\_A-Za-z0-9]+$`
-	if !regexp.MustCompile(pattern).MatchString(value) {
-		errors = append(errors, fmt.Errorf("only alphanumeric characters, and underscores allowed in %q", k))
-	}
-
-	// Check if doesn't start with a letter
-	if !unicode.IsLetter(rune(value[0])) {
-		errors = append(errors, fmt.Errorf("%q must start with a letter", k))
-	}
-
-	return
 }
 
 func resourceDDMAvailabilityZones(d *schema.ResourceData) []string {
@@ -443,14 +374,14 @@ func resourceDDMScaling(clientV1 *golangsdk.ServiceClient, clientV2 *golangsdk.S
 	oldNodeNum := oldNodeNumRaw.(int)
 	newNodeNum := newNodeNumRaw.(int)
 	if oldNodeNum < newNodeNum {
-		log.Printf("[DEBUG] Scaling up Instance %s", d.Id())
+		log.Printf("[DEBUG] Scaling up OpenTelekomCloud DDM Instance %s", d.Id())
 		scaleOutOpts := ddmv2instances.ScaleOutOpts{
 			FlavorId:   d.Get("flavor_id").(string),
 			NodeNumber: newNodeNum - oldNodeNum,
 		}
 		_, err := ddmv2instances.ScaleOut(clientV2, d.Id(), scaleOutOpts)
 		if err != nil {
-			return fmt.Errorf("error scaling up DDM instance: %w", err)
+			return fmt.Errorf("error scaling up OpenTelekomCloudDDM instance: %w", err)
 		}
 		stateConf := &resource.StateChangeConf{
 			Pending:    []string{"CREATING", "SET_CONFIGURATION", "RESTARTING", "GROWING"},
@@ -463,12 +394,12 @@ func resourceDDMScaling(clientV1 *golangsdk.ServiceClient, clientV2 *golangsdk.S
 
 		_, err = stateConf.WaitForStateContext(ctx)
 		if err != nil {
-			return fmt.Errorf("error waiting for instance (%s) to become ready during scale up: %w", d.Id(), err)
+			return fmt.Errorf("error waiting for OpenTelekomCloud DDM instance (%s) to become ready during scale up: %w", d.Id(), err)
 		}
 	} else {
 		log.Printf("[DEBUG] Scaling down Instance %s", d.Id())
 		if oldNodeNum-newNodeNum < 1 {
-			return fmt.Errorf("error scaling down DDM instance: %s\n num_nodes needs to be 1 or greater", d.Id())
+			return fmt.Errorf("error scaling down OpenTelekomCloud DDM instance: %s\n num_nodes needs to be 1 or greater", d.Id())
 		}
 		scaleInOpts := ddmv2instances.ScaleInOpts{
 			NodeNumber: oldNodeNum - newNodeNum,
@@ -488,7 +419,7 @@ func resourceDDMScaling(clientV1 *golangsdk.ServiceClient, clientV2 *golangsdk.S
 
 		_, err = stateConf.WaitForStateContext(ctx)
 		if err != nil {
-			return fmt.Errorf("error waiting for instance (%s) to become ready during scale down: %w", d.Id(), err)
+			return fmt.Errorf("error waiting for OpenTelekomCloud DDM instance (%s) to become ready during scale down: %w", d.Id(), err)
 		}
 	}
 	return nil

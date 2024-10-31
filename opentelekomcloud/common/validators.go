@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 var (
@@ -423,6 +424,62 @@ func ValidateIPRange(v interface{}, k string) (ws []string, errors []error) {
 				return
 			}
 		}
+	}
+
+	return
+}
+
+func ValidateDDMName(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	// Check length between 4 and 64
+	if len(value) > 64 || len(value) < 4 {
+		errors = append(errors, fmt.Errorf("%q must contain more than 4 and less than 64 characters", k))
+	}
+
+	// Check if contains invalid character
+	pattern := `^[\-A-Za-z0-9]+$`
+	if !regexp.MustCompile(pattern).MatchString(value) {
+		errors = append(errors, fmt.Errorf("only alphanumeric characters, and hyphens allowed in %q", k))
+	}
+
+	// Check if it doesn't start with a letter
+	if !unicode.IsLetter(rune(value[0])) {
+		errors = append(errors, fmt.Errorf("%q must start with a letter", k))
+	}
+
+	return
+}
+
+func ValidateUTCOffset(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	// Regular expression pattern for matching UTC offsets from +12:00 to -12:00
+	pattern := `^(UTC([+-](0[1-9]|1[0-2]):00)|UTC)$`
+
+	// Compile the regular expression
+	re := regexp.MustCompile(pattern)
+	if !re.MatchString(value) {
+		errors = append(errors, fmt.Errorf("only valid utc offsets allowed in %q", k))
+	}
+
+	return
+}
+
+func ValidateDDMUsername(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	// Check length between 1 and 32
+	if len(value) > 32 || len(value) < 1 {
+		errors = append(errors, fmt.Errorf("%q must contain more than 1 and less than 32 characters", k))
+	}
+
+	// Check if contains invalid character
+	pattern := `^[\_A-Za-z0-9]+$`
+	if !regexp.MustCompile(pattern).MatchString(value) {
+		errors = append(errors, fmt.Errorf("only alphanumeric characters, and underscores allowed in %q", k))
+	}
+
+	// Check if it doesn't start with a letter
+	if !unicode.IsLetter(rune(value[0])) {
+		errors = append(errors, fmt.Errorf("%q must start with a letter", k))
 	}
 
 	return

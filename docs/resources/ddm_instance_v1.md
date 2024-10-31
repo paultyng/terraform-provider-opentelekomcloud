@@ -86,8 +86,6 @@ resource "opentelekomcloud_ddm_instance_v1" "instance_1" {
 
 The following arguments are supported:
 
-* `region` - (Optional, String, ForceNew) Specifies the region of the DDM instance.
-
 * `name` - (Required, String) Specifies the DDM instance name. The DDM instance name of the same
   type is unique in the same tenant. It can be  4 to 64 characters long. It must start with a letter and it can only contain etters, digits, and hyphens (-).
 
@@ -120,7 +118,7 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-* `region` - See Argument Reference above.
+* `region` - The region of the DDM instance.
 * `name` - See Argument Reference above.
 * `availability_zones` - See Argument Reference above.
 * `vpc_id` - See Argument Reference above.
@@ -158,11 +156,23 @@ DDMv1 Instance can be imported using the `id`, e.g.
 terraform import opentelekomcloud_ddm_instance_v1.instance_1 c1851195-cdcb-4d23-96cb-032e6a3ee667
 ```
 
-Following attributes are not properly imported.
-* `availability_zones`
-* `flavor_id`
-* `engine_id`
-* `time_zone`
-* `password`
-* `param_group_id`
-* `purge_rds_on_delete`
+## Notes
+
+But due to some attributes missing from the API response, it's required to ignore changes as below:
+
+```hcl
+resource "opentelekomcloud_ddm_instance_v1" "instance_1" {
+  # ...
+
+  lifecycle {
+    ignore_changes = [
+      availability_zones,
+      flavor_id,
+      engine_id,
+      time_zone,
+      password,
+      purge_rds_on_delete
+    ]
+  }
+}
+```
