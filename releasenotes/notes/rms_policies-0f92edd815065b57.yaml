@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    **[RMS]** Add new resource ``resource/opentelekomcloud_rms_policy_assignment_v1`` (`# <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/>`_)
+  - |
+    **[RMS]** Add new data source ``data_source/opentelekomcloud_rms_policy_definitions_v1`` (`# <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/>`_)
