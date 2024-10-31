@@ -111,7 +111,7 @@ func testAccDwsV1ClusterBasic(clusterName string) string {
 resource "opentelekomcloud_dws_cluster_v1" "cluster_1" {
   name              = "%s"
   user_name         = "dbadmin"
-  user_pwd          = "#dbadmin123"
+  user_pwd          = "#dbadmin12345"
   node_type         = "dws.m3.xlarge"
   number_of_node    = 3
   network_id        = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
@@ -137,7 +137,7 @@ func testAccDwsV1ClusterUpdated(clusterName string) string {
 resource "opentelekomcloud_dws_cluster_v1" "cluster_1" {
   name              = "%s"
   user_name         = "dbadmin"
-  user_pwd          = "#dbadmin1234"
+  user_pwd          = "#dbadmin12345"
   node_type         = "dws.m3.xlarge"
   number_of_node    = 6
   network_id        = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id

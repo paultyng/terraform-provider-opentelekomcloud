@@ -915,6 +915,27 @@ func (c *Config) DCaaSV3Client(region string) (*golangsdk.ServiceClient, error) 
 	})
 }
 
+func (c *Config) DdmV1Client(region string) (*golangsdk.ServiceClient, error) {
+	return openstack.NewDDMV1(c.HwClient, golangsdk.EndpointOpts{
+		Region:       region,
+		Availability: c.getEndpointType(),
+	})
+}
+
+func (c *Config) DdmV2Client(region string) (*golangsdk.ServiceClient, error) {
+	return openstack.NewDDMV2(c.HwClient, golangsdk.EndpointOpts{
+		Region:       region,
+		Availability: c.getEndpointType(),
+	})
+}
+
+func (c *Config) DdmV3Client(region string) (*golangsdk.ServiceClient, error) {
+	return openstack.NewDDMV3(c.HwClient, golangsdk.EndpointOpts{
+		Region:       region,
+		Availability: c.getEndpointType(),
+	})
+}
+
 func (c *Config) DehV1Client(region string) (*golangsdk.ServiceClient, error) {
 	return openstack.NewDeHServiceV1(c.HwClient, golangsdk.EndpointOpts{
 		Region:       region,

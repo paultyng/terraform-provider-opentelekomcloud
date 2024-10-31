@@ -19,6 +19,7 @@ import (
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/cts"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/dcaas"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/dcs"
+	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/ddm"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/dds"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/deh"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/dis"
@@ -416,6 +417,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_dc_virtual_interface_v3":                   dcaas.ResourceVirtualInterfaceV3(),
 			"opentelekomcloud_dcs_instance_v1":                           dcs.ResourceDcsInstanceV1(),
 			"opentelekomcloud_dcs_instance_v2":                           dcs.ResourceDcsInstanceV2(),
+			"opentelekomcloud_ddm_instance_v1":                           ddm.ResourceDdmInstanceV1(),
 			"opentelekomcloud_dds_backup_v3":                             dds.ResourceDdsBackupV3(),
 			"opentelekomcloud_dds_instance_v3":                           dds.ResourceDdsInstanceV3(),
 			"opentelekomcloud_deh_host_v1":                               deh.ResourceDeHHostV1(),
