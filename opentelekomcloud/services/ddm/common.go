@@ -4,6 +4,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	ddmv1instances "github.com/opentelekomcloud/gophertelekomcloud/openstack/ddm/v1/instances"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/ddm/v1/schemas"
 )
 
 const (
@@ -27,6 +28,24 @@ func instanceStateRefreshFunc(client *golangsdk.ServiceClient, instanceID string
 		for _, instance := range instanceList {
 			if instance.Id == instanceID {
 				return instance, instance.Status, nil
+			}
+		}
+		return nil, "DELETED", nil
+	}
+}
+
+func schemaStateRefreshFunc(client *golangsdk.ServiceClient, instanceID string, schemaName string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		schemaList, err := schemas.QuerySchemas(client, instanceID, schemas.QuerySchemasOpts{})
+		if err != nil {
+			return nil, "Error retrieving DDM v1 schemas", err
+		}
+		if len(schemaList) == 0 {
+			return nil, "DELETED", nil
+		}
+		for _, schema := range schemaList {
+			if schema.Name == schemaName {
+				return schema, schema.Status, nil
 			}
 		}
 		return nil, "DELETED", nil
