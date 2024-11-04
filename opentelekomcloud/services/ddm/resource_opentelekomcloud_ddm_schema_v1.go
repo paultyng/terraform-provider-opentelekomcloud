@@ -84,21 +84,11 @@ func ResourceDdmSchemaV1() *schema.Resource {
 							Type:      schema.TypeString,
 							Required:  true,
 							Sensitive: true,
-							ForceNew:  true,
 						},
 						"admin_password": {
 							Type:      schema.TypeString,
 							Required:  true,
 							Sensitive: true,
-							ForceNew:  true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"status": {
-							Type:     schema.TypeString,
-							Computed: true,
 						},
 					},
 				},
@@ -106,6 +96,7 @@ func ResourceDdmSchemaV1() *schema.Resource {
 			"purge_rds_on_delete": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				ForceNew: true,
 				Default:  false,
 			},
 			"status": {
@@ -113,11 +104,11 @@ func ResourceDdmSchemaV1() *schema.Resource {
 				Computed: true,
 			},
 			"created_at": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 			"updated_at": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 			"data_vips": {
@@ -157,6 +148,27 @@ func ResourceDdmSchemaV1() *schema.Resource {
 							Computed: true,
 						},
 						"rds_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
+			"used_rds": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"status": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -279,7 +291,7 @@ func resourceDdmSchemaV1Read(ctx context.Context, d *schema.ResourceData, meta i
 
 	mErr = multierror.Append(
 		mErr,
-		d.Set("rds", rdsList),
+		d.Set("used_rds", rdsList),
 	)
 
 	return diag.FromErr(mErr.ErrorOrNil())
@@ -299,9 +311,31 @@ func resourceDdmSchemaV1Delete(ctx context.Context, d *schema.ResourceData, meta
 	schemaName := d.Get("name").(string)
 	ddmInstanceId := d.Get("ddm_instance_id").(string)
 	deleteRdsData := d.Get("purge_rds_on_delete").(bool)
-	_, err = schemas.DeleteSchema(client, ddmInstanceId, schemaName, deleteRdsData)
+
+	err = golangsdk.WaitFor(1000, func() (bool, error) {
+		_, err := schemas.DeleteSchema(client, ddmInstanceId, schemaName, deleteRdsData)
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+
+	// _, err = schemas.DeleteSchema(client, ddmInstanceId, schemaName, deleteRdsData)
+	// if err != nil {
+	// 	return fmterr.Errorf("error deleting OpenTelekomCloud DDM schema: %s", err)
+	// }
+	// stateConf := &resource.StateChangeConf{
+	// 	Pending:    []string{"AVAILABLE"},
+	// 	Target:     []string{"DELETED"},
+	// 	Refresh:    schemaDeleteStateRefreshFunc(client, ddmInstanceId, schemaName),
+	// 	Timeout:    d.Timeout(schema.TimeoutCreate),
+	// 	Delay:      15 * time.Second,
+	// 	MinTimeout: 10 * time.Second,
+	// }
+
+	// _, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
-		return fmterr.Errorf("error deleting OpenTelekomCloud DDM schema: %s", err)
+		return fmterr.Errorf("error waiting for OpenTelekomCloud DDM schema (%s) to be deleted: %w", schemaName, err)
 	}
 
 	d.SetId("")
