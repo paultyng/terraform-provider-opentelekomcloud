@@ -776,7 +776,7 @@ resource "opentelekomcloud_compute_instance_v2" "instance_1" {
   security_groups = ["default"]
   network {
     uuid        = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-    fixed_ip_v4 = "10.0.0.24"
+    fixed_ip_v4 = cidrhost(data.opentelekomcloud_vpc_subnet_v1.shared_subnet.cidr, 24)
   }
   stop_before_destroy = true
 }

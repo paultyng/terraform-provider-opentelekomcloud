@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    **[ECS]** Fixed ``stop_before_destroy`` state check before delete in ``resource/opentelekomcloud_compute_instance_v2`` (`#2703 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2703>`_)
