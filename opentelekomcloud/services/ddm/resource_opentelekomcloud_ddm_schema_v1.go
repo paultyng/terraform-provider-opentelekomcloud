@@ -312,30 +312,9 @@ func resourceDdmSchemaV1Delete(ctx context.Context, d *schema.ResourceData, meta
 	ddmInstanceId := d.Get("ddm_instance_id").(string)
 	deleteRdsData := d.Get("purge_rds_on_delete").(bool)
 
-	err = golangsdk.WaitFor(1000, func() (bool, error) {
-		_, err := schemas.DeleteSchema(client, ddmInstanceId, schemaName, deleteRdsData)
-		if err != nil {
-			return false, nil
-		}
-		return true, nil
-	})
-
-	// _, err = schemas.DeleteSchema(client, ddmInstanceId, schemaName, deleteRdsData)
-	// if err != nil {
-	// 	return fmterr.Errorf("error deleting OpenTelekomCloud DDM schema: %s", err)
-	// }
-	// stateConf := &resource.StateChangeConf{
-	// 	Pending:    []string{"AVAILABLE"},
-	// 	Target:     []string{"DELETED"},
-	// 	Refresh:    schemaDeleteStateRefreshFunc(client, ddmInstanceId, schemaName),
-	// 	Timeout:    d.Timeout(schema.TimeoutCreate),
-	// 	Delay:      15 * time.Second,
-	// 	MinTimeout: 10 * time.Second,
-	// }
-
-	// _, err = stateConf.WaitForStateContext(ctx)
+	_, err = schemas.DeleteSchema(client, ddmInstanceId, schemaName, deleteRdsData)
 	if err != nil {
-		return fmterr.Errorf("error waiting for OpenTelekomCloud DDM schema (%s) to be deleted: %w", schemaName, err)
+		return fmterr.Errorf("error deleting OpenTelekomCloud DDM schema: %s", err)
 	}
 
 	d.SetId("")
