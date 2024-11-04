@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
-
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/ddm/v1/schemas"
 
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common"
@@ -27,7 +26,7 @@ func ResourceDdmSchemaV1() *schema.Resource {
 		DeleteContext: resourceDdmSchemaV1Delete,
 
 		Importer: &schema.ResourceImporter{
-			StateContext: common.ImportByPath("ddm_instance_id", "name"),
+			StateContext: common.ImportByPath("instance_id", "name"),
 		},
 
 		Timeouts: &schema.ResourceTimeout{
@@ -43,7 +42,7 @@ func ResourceDdmSchemaV1() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: common.ValidateDDMSchemaName,
 			},
-			"ddm_instance_id": {
+			"instance_id": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -204,20 +203,20 @@ func resourceDdmSchemaV1Create(ctx context.Context, d *schema.ResourceData, meta
 		Databases: []schemas.CreateDatabaseDetail{schemaDatabaseDetail},
 	}
 
-	ddmInstanceId := d.Get("ddm_instance_id").(string)
-	ddmSchema, err := schemas.CreateSchema(client, ddmInstanceId, createOpts)
+	instanceId := d.Get("instance_id").(string)
+	ddmSchema, err := schemas.CreateSchema(client, instanceId, createOpts)
 	if err != nil {
 		return fmterr.Errorf("error getting OpenTelekomCloud DDM instance from result: %w", err)
 	}
 	schemaName := ddmSchema.Databases[0].Name
-	id := fmt.Sprintf("%s/%s", ddmInstanceId, schemaName)
+	id := fmt.Sprintf("%s/%s", instanceId, schemaName)
 	d.SetId(id)
 	log.Printf("[DEBUG] Create DDM schema %s", schemaName)
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"CREATE", "CREATING"},
 		Target:     []string{"RUNNING"},
-		Refresh:    schemaStateRefreshFunc(client, ddmInstanceId, schemaName),
+		Refresh:    schemaStateRefreshFunc(client, instanceId, schemaName),
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      15 * time.Second,
 		MinTimeout: 10 * time.Second,
@@ -242,28 +241,28 @@ func resourceDdmSchemaV1Read(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	schemaName := d.Get("name").(string)
-	ddmInstanceId := d.Get("ddm_instance_id").(string)
-	schema, err := schemas.QuerySchemaDetails(client, ddmInstanceId, schemaName)
+	ddmInstanceId := d.Get("instance_id").(string)
+	sc, err := schemas.QuerySchemaDetails(client, ddmInstanceId, schemaName)
 	if err != nil {
 		return fmterr.Errorf("error fetching DDM instance: %w", err)
 	}
 
-	log.Printf("[DEBUG] Retrieved instance %s: %#v", schemaName, schema.Database)
+	log.Printf("[DEBUG] Retrieved instance %s: %#v", schemaName, sc.Database)
 
 	mErr := multierror.Append(nil,
 		d.Set("region", config.GetRegion(d)),
-		d.Set("name", schema.Database.Name),
-		d.Set("status", schema.Database.Status),
-		d.Set("shard_mode", schema.Database.ShardMode),
-		d.Set("shard_number", schema.Database.ShardNumber),
-		d.Set("shard_unit", schema.Database.ShardUnit),
-		d.Set("created_at", schema.Database.Created),
-		d.Set("updated_at", schema.Database.Updated),
-		d.Set("data_vips", schema.Database.DataVips),
+		d.Set("name", sc.Database.Name),
+		d.Set("status", sc.Database.Status),
+		d.Set("shard_mode", sc.Database.ShardMode),
+		d.Set("shard_number", sc.Database.ShardNumber),
+		d.Set("shard_unit", sc.Database.ShardUnit),
+		d.Set("created_at", sc.Database.Created),
+		d.Set("updated_at", sc.Database.Updated),
+		d.Set("data_vips", sc.Database.DataVips),
 	)
 
 	var databasesList []map[string]interface{}
-	for _, databaseRaw := range schema.Database.Databases {
+	for _, databaseRaw := range sc.Database.Databases {
 		database := make(map[string]interface{})
 		database["db_slot"] = databaseRaw.DbSlot
 		database["name"] = databaseRaw.Name
@@ -281,7 +280,7 @@ func resourceDdmSchemaV1Read(ctx context.Context, d *schema.ResourceData, meta i
 	)
 
 	var rdsList []map[string]interface{}
-	for _, rdsRaw := range schema.Database.UsedRds {
+	for _, rdsRaw := range sc.Database.UsedRds {
 		rds := make(map[string]interface{})
 		rds["id"] = rdsRaw.ID
 		rds["name"] = rdsRaw.Name
@@ -309,10 +308,16 @@ func resourceDdmSchemaV1Delete(ctx context.Context, d *schema.ResourceData, meta
 	log.Printf("[DEBUG] Deleting OpenTelekomCloud DDM schema %s", d.Id())
 
 	schemaName := d.Get("name").(string)
-	ddmInstanceId := d.Get("ddm_instance_id").(string)
+	ddmInstanceId := d.Get("instance_id").(string)
 	deleteRdsData := d.Get("purge_rds_on_delete").(bool)
 
-	_, err = schemas.DeleteSchema(client, ddmInstanceId, schemaName, deleteRdsData)
+	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
+		_, err = schemas.DeleteSchema(client, ddmInstanceId, schemaName, deleteRdsData)
+		if err != nil {
+			return common.CheckForRetryableError(err)
+		}
+		return nil
+	})
 	if err != nil {
 		return fmterr.Errorf("error deleting OpenTelekomCloud DDM schema: %s", err)
 	}
