@@ -981,11 +981,25 @@ func resourceComputeInstanceV2Delete(ctx context.Context, d *schema.ResourceData
 	}
 	client.Microversion = microversion
 	if d.Get("stop_before_destroy").(bool) {
-		if err := startstop.Stop(client, d.Id()).ExtractErr(); err != nil {
+		err = startstop.Stop(client, d.Id()).ExtractErr()
+		if err != nil {
 			log.Printf("[WARN] Error stopping OpenTelekomCloud instance: %s", err)
+		} else {
+			stopStateConf := &resource.StateChangeConf{
+				Pending:    []string{"ACTIVE"},
+				Target:     []string{"SHUTOFF"},
+				Refresh:    ServerV2StateRefreshFunc(client, d.Id()),
+				Timeout:    d.Timeout(schema.TimeoutDelete),
+				Delay:      10 * time.Second,
+				MinTimeout: 3 * time.Second,
+			}
+			log.Printf("[DEBUG] Waiting for instance (%s) to stop", d.Id())
+			_, err = stopStateConf.WaitForStateContext(ctx)
+			if err != nil {
+				log.Printf("[WARN] Error waiting for instance (%s) to stop: %s, proceeding to delete", d.Id(), err)
+			}
 		}
 	}
-
 	log.Printf("[DEBUG] Deleting OpenTelekomCloud Instance %s", d.Id())
 	if err := servers.Delete(client, d.Id()).ExtractErr(); err != nil {
 		return fmterr.Errorf("error deleting OpenTelekomCloud server: %w", err)
