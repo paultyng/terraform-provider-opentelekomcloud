@@ -288,7 +288,11 @@ The following arguments are supported:
   to associate with the server. If this parameter is left blank, the `default`
   security group is bound to the ECS by default.
 
-* `availability_zone` - (Required, String, ForceNew) The availability zone in which to create the server.
+* `availability_zone` - (Optional, String, ForceNew) The availability zone in which to create the server.
+
+  -> **NOTE:**
+  If this parameter is not specified, the system automatically selects an AZ.
+
   Changing this creates a new server.
 
 * `os_scheduler_hints` - (Optional, Map, ForceNew) Schedules ECSs, for example, by configuring an ECS group. The `os_scheduler_hints` object structure is documented below. Changing this creates a new server.

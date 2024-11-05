@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/common/pointerto"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/common/tags"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/compute/v2/extensions/secgroups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/compute/v2/servers"
@@ -218,7 +219,8 @@ func ResourceEcsInstanceV1() *schema.Resource {
 			},
 			"availability_zone": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Computed: true,
 				ForceNew: true,
 			},
 			"os_scheduler_hints": {
@@ -277,7 +279,7 @@ func resourceEcsInstanceV1Create(ctx context.Context, d *schema.ResourceData, me
 		KeyName:          d.Get("key_name").(string),
 		VpcId:            d.Get("vpc_id").(string),
 		SecurityGroups:   resourceInstanceSecGroupsV1(d),
-		AvailabilityZone: d.Get("availability_zone").(string),
+		AvailabilityZone: pointerto.String(d.Get("availability_zone").(string)),
 		Nics:             resourceInstanceNicsV1(d),
 		RootVolume:       resourceInstanceRootVolumeV1(d),
 		DataVolumes:      resourceInstanceDataVolumesV1(d),

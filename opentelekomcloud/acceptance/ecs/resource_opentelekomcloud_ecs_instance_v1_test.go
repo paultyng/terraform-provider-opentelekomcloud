@@ -276,6 +276,36 @@ func TestAccEcsV1InstanceVolumeAttach(t *testing.T) {
 	})
 }
 
+func TestAccEcsV1InstanceWithoutAZ(t *testing.T) {
+	var instance cloudservers.CloudServer
+	qts := serverQuotas(10+4, "s2.medium.1")
+	t.Parallel()
+	quotas.BookMany(t, qts)
+
+	rc := common.InitResourceCheck(
+		resourceInstanceV1Name,
+		&instance,
+		getEcsInstanceFunc,
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { common.TestAccPreCheck(t) },
+		ProviderFactories: common.TestAccProviderFactories,
+		CheckDestroy:      testAccCheckEcsV1InstanceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEcsV1InstanceWithoutAZ,
+				Check: resource.ComposeTestCheckFunc(
+					rc.CheckResourceExists(),
+					resource.TestCheckResourceAttr(resourceInstanceV1Name, "auto_recovery", "true"),
+					resource.TestCheckResourceAttr(resourceInstanceV1Name, "security_groups.#", "1"),
+					resource.TestCheckResourceAttr(resourceInstanceV1Name, "tags.muh", "value-create"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckEcsV1InstanceDestroy(s *terraform.State) error {
 	config := common.TestAccProvider.Meta().(*cfg.Config)
 	client, err := config.ComputeV1Client(env.OS_REGION_NAME)
@@ -673,3 +703,44 @@ resource "opentelekomcloud_compute_volume_attach_v2" "attached" {
   volume_id   = opentelekomcloud_blockstorage_volume_v2.myvol.id
 }
 `, common.DataSourceImage, common.DataSourceSubnet, env.OS_AVAILABILITY_ZONE, env.OS_AVAILABILITY_ZONE)
+
+var testAccEcsV1InstanceWithoutAZ = fmt.Sprintf(`
+%s
+
+%s
+
+
+resource "opentelekomcloud_compute_servergroup_v2" "sg_1" {
+  name     = "sg_1"
+  policies = ["anti-affinity"]
+}
+
+resource "opentelekomcloud_ecs_instance_v1" "instance_1" {
+  name     = "server_1"
+  image_id = data.opentelekomcloud_images_image_v2.latest_image.id
+  flavor   = "s2.medium.1"
+  vpc_id   = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
+
+  nics {
+    network_id = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
+  }
+
+  data_disks {
+    size = 10
+    type = "SAS"
+  }
+
+  password                    = "Password@123"
+  auto_recovery               = true
+  delete_disks_on_termination = true
+  os_scheduler_hints {
+    group   = opentelekomcloud_compute_servergroup_v2.sg_1.id
+    tenancy = "shared"
+  }
+
+  tags = {
+    muh = "value-create"
+    kuh = "value-create"
+  }
+}
+`, common.DataSourceImage, common.DataSourceSubnet)
