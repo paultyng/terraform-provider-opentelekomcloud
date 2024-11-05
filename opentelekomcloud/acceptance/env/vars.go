@@ -25,6 +25,8 @@ var (
 	OS_DEST_REGION       = os.Getenv("OS_DEST_REGION")
 	OS_DEST_PROJECT_ID   = os.Getenv("OS_DEST_PROJECT_ID")
 	OS_DC_HOSTING_ID     = os.Getenv("OS_DC_HOSTING_ID")
+	OS_DDM_ID            = os.Getenv("OS_DDM_ID")
+	OS_RDS_ID            = os.Getenv("OS_RDS_ID")
 )
 
 func flavorID() string {

@@ -60,18 +60,18 @@ func TestAccDdmSchemasV1_basic(t *testing.T) {
 	})
 }
 
-var testAccDdmSchemaV1Basic = `
+var testAccDdmSchemaV1Basic = fmt.Sprintf(`
 resource "opentelekomcloud_ddm_schema_v1" "schema_1" {
   name         = "ddm_schema"
-  instance_id  = "b4cd6aeb0b7445d3bf271457c6941544in09"
+  instance_id  = "%s"
   shard_mode   = "cluster"
   shard_number = 8
   shard_unit   = 8
   rds {
-    id             = "55d93e249b77461b81f990fa805db3f3in01"
+    id             = "%s"
     admin_username = "root"
     admin_password = "test-acc-password-1"
   }
   purge_rds_on_delete = true
 }
-`
+`, env.OS_DDM_ID, env.OS_RDS_ID)
