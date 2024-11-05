@@ -4,8 +4,12 @@ layout: "opentelekomcloud"
 page_title: "OpenTelekomCloud: opentelekomcloud_rms_advanced_queries_v1"
 sidebar_current: "docs-opentelekomcloud-datasource-rms-advanced-queries-v1"
 description: |-
-  Manages an RMS Advances Queries data source within OpenTelekomCloud.
+  Manages an RMS Advanced Queries data source within OpenTelekomCloud.
 ---
+
+Up-to-date reference of API arguments for RMS Advanced Queries you can get at
+[documentation portal](https://docs.otc.t-systems.com/config/api-ref/apis/advanced_queries/listing_advanced_queries.html#rms-04-0703)
+
 
 # opentelekomcloud_rms_advanced_queries_v1
 
