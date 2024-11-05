@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    **[DDM]** Add new resource ``resource/opentelekomcloud_ddm_schema_v1`` (`#2702 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2702>`_).
