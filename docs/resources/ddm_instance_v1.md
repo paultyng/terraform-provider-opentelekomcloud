@@ -7,7 +7,7 @@ description: |-
   Manages a DDM Instance resource within OpenTelekomCloud.
 ---
 
-Up-to-date reference of API arguments for DDS instance you can get at
+Up-to-date reference of API arguments for DDM instance you can get at
 [documentation portal](https://docs.otc.t-systems.com/distributed-database-middleware/api-ref/apis_recommended/ddm_instances)
 
 # opentelekomcloud_ddm_instance_v1

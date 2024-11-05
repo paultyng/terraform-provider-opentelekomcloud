@@ -19,7 +19,7 @@ const ddmInstanceResourceName = "opentelekomcloud_ddm_instance_v1.instance_1"
 func getDDMInstanceResourceFunc(cfg *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
 	client, err := cfg.DdmV1Client(env.OS_REGION_NAME)
 	if err != nil {
-		return nil, fmt.Errorf("error creating SDRS Client: %s", err)
+		return nil, fmt.Errorf("error creating DDM v1 Client: %s", err)
 	}
 	return instances.QueryInstanceDetails(client, state.Primary.ID)
 }
