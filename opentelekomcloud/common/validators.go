@@ -508,7 +508,6 @@ func ValidateDDMSchemaName(v interface{}, k string) (ws []string, errors []error
 		errors = append(errors, fmt.Errorf("%q must not contain the keywords information_schema, mysql, performance_schema, or sys", k))
 	default:
 		return
-
 	}
 	return
 }

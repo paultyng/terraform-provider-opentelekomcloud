@@ -118,7 +118,7 @@ resource "opentelekomcloud_ddm_schema_v1" "schema_1" {
 
   lifecycle {
     ignore_changes = [
-      rds,      
+      rds,
       updated_at,
       purge_rds_on_delete
     ]
