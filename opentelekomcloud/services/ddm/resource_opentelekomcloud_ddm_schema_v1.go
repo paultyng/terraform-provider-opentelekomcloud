@@ -134,11 +134,11 @@ func ResourceDdmSchemaV1() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"created": {
+						"created_at": {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
-						"updated": {
+						"updated_at": {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
@@ -267,8 +267,8 @@ func resourceDdmSchemaV1Read(ctx context.Context, d *schema.ResourceData, meta i
 		database["db_slot"] = databaseRaw.DbSlot
 		database["name"] = databaseRaw.Name
 		database["status"] = databaseRaw.Status
-		database["created"] = databaseRaw.Created
-		database["updated"] = databaseRaw.Updated
+		database["created_at"] = databaseRaw.Created
+		database["updated_at"] = databaseRaw.Updated
 		database["id"] = databaseRaw.Id
 		database["rds_name"] = databaseRaw.IdName
 		databasesList = append(databasesList, database)

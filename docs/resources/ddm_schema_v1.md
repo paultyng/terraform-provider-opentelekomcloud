@@ -94,8 +94,8 @@ The `databases` block contains:
   - `db_slot` - (String) Indicates the Number of shards.
   - `name` - (String) Indicates the shard name.
   - `status` - (String) Indicates the shard status.
-  - `created` - (uint64) Indicates the screation time.
-  - `updated` - (uint64) Indicates the update time.
+  - `created_at` - (uint64) Indicates the creation time.
+  - `updated_at` - (uint64) Indicates the update time.
   - `id` - (String) ID of the RDS instance where the shard is located.
   - `rds_name` (String) Name of the RDS instance where the shard is located
 
