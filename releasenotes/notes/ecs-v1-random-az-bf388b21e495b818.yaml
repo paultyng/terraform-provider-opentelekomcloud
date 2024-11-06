@@ -1,0 +1,4 @@
+---
+enhancements:
+  - |
+    **[ECS]** Auto AZ selection support for ``resource/opentelekomcloud_ecs_instance_v1`` (`#2705 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2705>`_)
