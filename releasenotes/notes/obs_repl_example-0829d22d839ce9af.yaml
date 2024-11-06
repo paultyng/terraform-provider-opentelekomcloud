@@ -1,4 +1,4 @@
 ---
 other:
   - |
-    **[OBS]** Clarify documentation for ``resource/opentelekomcloud_obs_bucket_replication`` (`# <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/>`_)
+    **[OBS]** Clarify documentation for ``resource/opentelekomcloud_obs_bucket_replication`` (`#2706 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2706>`_)
