@@ -30,6 +30,11 @@ resource "opentelekomcloud_obs_bucket_replication" "test" {
   bucket             = var.bucket
   destination_bucket = var.destination_bucket
   agency             = var.agency
+
+  rule {
+    history_enabled = false
+    delete_data     = false
+  }
 }
 ```
 
