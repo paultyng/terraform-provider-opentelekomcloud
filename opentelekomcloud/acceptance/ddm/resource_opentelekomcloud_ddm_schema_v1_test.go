@@ -29,6 +29,9 @@ func getDDMSchemaResourceFunc(cfg *cfg.Config, state *terraform.ResourceState) (
 }
 
 func TestAccDdmSchemasV1_basic(t *testing.T) {
+	if env.OS_DDM_ID == "" && env.OS_RDS_ID == "" {
+		t.Skip("OS_DDM_ID and OS_RDS_ID is required for test")
+	}
 	var schema schemas.GetDatabaseResponseBean
 	rc := common.InitResourceCheck(
 		ddmSchemaResourceName,
