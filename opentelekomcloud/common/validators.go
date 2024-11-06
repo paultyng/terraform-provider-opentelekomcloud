@@ -484,3 +484,30 @@ func ValidateDDMUsername(v interface{}, k string) (ws []string, errors []error) 
 
 	return
 }
+
+func ValidateDDMSchemaName(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	// Check length between 4 and 64
+	if len(value) > 48 || len(value) < 2 {
+		errors = append(errors, fmt.Errorf("%q must contain more than 2 and less than 48 characters", k))
+	}
+
+	// Check if contains invalid character
+	pattern := `^[\_A-Za-z0-9]+$`
+	if !regexp.MustCompile(pattern).MatchString(value) {
+		errors = append(errors, fmt.Errorf("only alphanumeric characters, and underscores allowed in %q", k))
+	}
+
+	// Check if it doesn't start with a letter
+	if !unicode.IsLetter(rune(value[0])) {
+		errors = append(errors, fmt.Errorf("%q must start with a letter", k))
+	}
+
+	switch value {
+	case "information_schema", "mysql", "performance_schema", "sys":
+		errors = append(errors, fmt.Errorf("%q must not contain the keywords information_schema, mysql, performance_schema, or sys", k))
+	default:
+		return
+	}
+	return
+}
