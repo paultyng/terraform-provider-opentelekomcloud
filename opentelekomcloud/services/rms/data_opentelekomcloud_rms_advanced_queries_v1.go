@@ -15,7 +15,7 @@ import (
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/fmterr"
 )
 
-func DataSourceRmsAdvancedQueries() *schema.Resource {
+func DataSourceRmsAdvancedQueriesV1() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceRmsAdvancedQueriesRead,
 
@@ -83,7 +83,7 @@ func dataSourceRmsAdvancedQueriesRead(ctx context.Context, d *schema.ResourceDat
 	})
 
 	if err != nil {
-		return diag.Errorf("error getting the advanced query list form server: %s", err)
+		return diag.Errorf("error getting the advanced query list from server: %s", err)
 	}
 
 	var flattenQueries []map[string]interface{}

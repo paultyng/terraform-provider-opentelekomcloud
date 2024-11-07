@@ -16,7 +16,7 @@ import (
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/helper/hashcode"
 )
 
-func DataSourcePolicyDefinitions() *schema.Resource {
+func DataSourcePolicyDefinitionsV1() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourcePolicyDefinitionsRead,
 
