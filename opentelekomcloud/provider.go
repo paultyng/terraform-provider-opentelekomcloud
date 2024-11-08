@@ -288,6 +288,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_dcs_product_v1":                    dcs.DataSourceDcsProductV1(),
 			"opentelekomcloud_deh_host_v1":                       deh.DataSourceDEHHostV1(),
 			"opentelekomcloud_deh_server_v1":                     deh.DataSourceDEHServersV1(),
+			"opentelekomcloud_ddm_instance_v1":                   ddm.DataSourceDdmInstanceV1(),
 			"opentelekomcloud_dds_flavors_v3":                    dds.DataSourceDdsFlavorV3(),
 			"opentelekomcloud_dds_instance_v3":                   dds.DataSourceDdsInstanceV3(),
 			"opentelekomcloud_dms_az_v1":                         dms.DataSourceDmsAZV1(),

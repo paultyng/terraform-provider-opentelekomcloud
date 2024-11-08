@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    **[DDM]** New Data Source: ``opentelekomcloud_ddm_instance_v1`` (`#2709 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2709>`_)
