@@ -79,7 +79,7 @@ func dataSourceDdmEnginesV1Read(ctx context.Context, d *schema.ResourceData, met
 
 	enginesRaw, err := ddmv2instances.QueryEngineInfo(client, ddmv2instances.QueryEngineOpts{})
 	if err != nil {
-		return fmterr.Errorf("error fetching DDM instance: %w", err)
+		return fmterr.Errorf("error fetching DDM engines: %w", err)
 	}
 
 	log.Printf("[DEBUG] Retrieved DDM engines info: %#v", enginesRaw)
@@ -103,7 +103,6 @@ func dataSourceDdmEnginesV1Read(ctx context.Context, d *schema.ResourceData, met
 			azList = append(azList, az)
 		}
 		engine["availability_zones"] = azList
-
 		enginesList = append(enginesList, engine)
 	}
 
