@@ -205,7 +205,7 @@ func resourceFWRuleV2Update(ctx context.Context, d *schema.ResourceData, meta in
 		sourcePort := d.Get("source_port").(string)
 		updateOpts.SourcePort = &sourcePort
 		if *updateOpts.SourcePort == "" {
-			updateOpts.SourcePort = pointerto.String("0")
+			updateOpts.SourcePort = nil
 		}
 	}
 	if d.HasChange("protocol") {
