@@ -237,7 +237,7 @@ func resourceFWRuleV2Update(ctx context.Context, d *schema.ResourceData, meta in
 		updateOpts.Enabled = &enabled
 	}
 
-	if d.Get("protocol").(string) != "icmp" && (updateOpts.DestinationPort == nil) { // && updateOpts.SourcePort == nil) {
+	if d.Get("protocol").(string) != "icmp" && (updateOpts.DestinationPort == nil && updateOpts.SourcePort == nil) {
 		updateOpts.DestinationPort = pointerto.String(d.Get("destination_port").(string))
 		if d.Get("source_port").(string) != "" {
 			updateOpts.SourcePort = pointerto.String(d.Get("source_port").(string))
