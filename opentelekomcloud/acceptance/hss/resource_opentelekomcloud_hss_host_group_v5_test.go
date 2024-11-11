@@ -112,8 +112,8 @@ func testAccHostGroup_basic(name string) string {
 %[1]s
 
 resource "opentelekomcloud_hss_host_group_v5" "group" {
-  name                  = "%[2]s"
-  host_ids              = slice(opentelekomcloud_compute_instance_v2.instance[*].id, 0, 1)
+  name     = "%[2]s"
+  host_ids = slice(opentelekomcloud_compute_instance_v2.instance[*].id, 0, 1)
 }
 `, testAccHostGroup_base(name), name)
 }
@@ -123,8 +123,8 @@ func testAccHostGroup_update(name string) string {
 %[1]s
 
 resource "opentelekomcloud_hss_host_group_v5" "group" {
-  name                  = "%[2]s-update"
-  host_ids              = opentelekomcloud_compute_instance_v2.instance[*].id
+  name     = "%[2]s-update"
+  host_ids = opentelekomcloud_compute_instance_v2.instance[*].id
 }
 `, testAccHostGroup_base(name), name)
 }
