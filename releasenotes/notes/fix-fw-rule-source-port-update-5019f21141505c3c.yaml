@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    **[IAM]** Fix updating rule when source_port is empty in ``resource/opentelekomcloud_fw_rule_v2`` (`#2715 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/issues/2715>`_)
