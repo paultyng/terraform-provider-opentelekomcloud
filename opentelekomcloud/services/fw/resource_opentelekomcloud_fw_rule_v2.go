@@ -205,7 +205,7 @@ func resourceFWRuleV2Update(ctx context.Context, d *schema.ResourceData, meta in
 		sourcePort := d.Get("source_port").(string)
 		updateOpts.SourcePort = &sourcePort
 		if *updateOpts.SourcePort == "" {
-			updateOpts.SourcePort = nil
+			updateOpts.SourcePort = pointerto.String("0")
 		}
 	}
 	if d.HasChange("protocol") {
@@ -237,9 +237,11 @@ func resourceFWRuleV2Update(ctx context.Context, d *schema.ResourceData, meta in
 		updateOpts.Enabled = &enabled
 	}
 
-	if d.Get("protocol").(string) != "icmp" && (updateOpts.DestinationPort == nil && updateOpts.SourcePort == nil) {
+	if d.Get("protocol").(string) != "icmp" && (updateOpts.DestinationPort == nil) { // && updateOpts.SourcePort == nil) {
 		updateOpts.DestinationPort = pointerto.String(d.Get("destination_port").(string))
-		updateOpts.SourcePort = pointerto.String(d.Get("source_port").(string))
+		if d.Get("source_port").(string) != "" {
+			updateOpts.SourcePort = pointerto.String(d.Get("source_port").(string))
+		}
 	}
 
 	log.Printf("[DEBUG] Updating firewall rules: %#v", updateOpts)
