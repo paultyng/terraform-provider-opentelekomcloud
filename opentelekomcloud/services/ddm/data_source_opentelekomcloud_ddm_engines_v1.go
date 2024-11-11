@@ -84,8 +84,10 @@ func dataSourceDdmEnginesV1Read(ctx context.Context, d *schema.ResourceData, met
 
 	log.Printf("[DEBUG] Retrieved DDM engines info: %#v", enginesRaw)
 
+	d.SetId(config.GetRegion(d))
+
 	mErr := multierror.Append(nil,
-		d.Set("region", config.GetRegion(d)),
+		d.Set("region", d.Id()),
 	)
 
 	var enginesList []map[string]interface{}

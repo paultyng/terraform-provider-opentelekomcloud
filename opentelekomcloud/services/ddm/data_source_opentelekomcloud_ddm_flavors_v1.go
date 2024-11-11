@@ -111,9 +111,10 @@ func dataSourceDdmFlavorsV1Read(ctx context.Context, d *schema.ResourceData, met
 	flavorGroupsRaw := queryNodeClassesResponse.ComputeFlavorGroups
 	log.Printf("[DEBUG] Retrieved DDM node class info: %#v", flavorGroupsRaw)
 
+	d.SetId(d.Get("engine_id").(string))
 	mErr := multierror.Append(nil,
 		d.Set("region", config.GetRegion(d)),
-		d.Set("engine_id", d.Get("engine_id")),
+		d.Set("engine_id", d.Id()),
 	)
 
 	var flavourGroups []map[string]interface{}
