@@ -170,6 +170,30 @@ func TestAccFWRuleV2_TCPUpdate(t *testing.T) {
 	})
 }
 
+// Customer issue https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/issues/2711
+func TestAccFWRuleV2_emptySourcePort(t *testing.T) {
+	rname := "opentelekomcloud_fw_rule_v2.egress_test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { common.TestAccPreCheck(t) },
+		ProviderFactories: common.TestAccProviderFactories,
+		CheckDestroy:      testAccCheckFWRuleV2Destroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccFWRuleV2emptySourcePort(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(rname, "protocol", "udp"),
+				),
+			},
+			{
+				Config: testAccFWRuleV2emptySourcePort_update(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(rname, "protocol", "udp"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckFWRuleV2Destroy(s *terraform.State) error {
 	config := common.TestAccProvider.Meta().(*cfg.Config)
 	networkingClient, err := config.NetworkingV2Client(env.OS_REGION_NAME)
@@ -350,3 +374,77 @@ resource "opentelekomcloud_fw_rule_v2" "rule_1" {
   enabled = "true"
 }
 `
+
+func testAccFWRuleV2emptySourcePort() string {
+	return fmt.Sprintf(`
+%s
+
+resource "opentelekomcloud_fw_rule_v2" "egress_test" {
+
+  description            = "egress test"
+  action                 = "allow"
+  protocol               = "udp"
+  source_ip_address      = "192.168.1.0/29"
+  destination_ip_address = "0.0.0.0/0"
+  destination_port       = "1234"
+
+  enabled = "true"
+}
+
+resource "opentelekomcloud_fw_policy_v2" "egress" {
+  name = "egress"
+
+  rules = [opentelekomcloud_fw_rule_v2.egress_test.id]
+}
+
+data "opentelekomcloud_networking_port_v2" "this" {
+  network_id   = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
+  device_owner = "network:router_interface_distributed"
+}
+
+resource "opentelekomcloud_fw_firewall_group_v2" "this" {
+  name             = "test"
+  egress_policy_id = opentelekomcloud_fw_policy_v2.egress.id
+  ports = [
+    data.opentelekomcloud_networking_port_v2.this.id
+  ]
+}
+`, common.DataSourceSubnet)
+}
+
+func testAccFWRuleV2emptySourcePort_update() string {
+	return fmt.Sprintf(`
+%s
+
+resource "opentelekomcloud_fw_rule_v2" "egress_test" {
+
+  description            = "egress test"
+  action                 = "allow"
+  protocol               = "udp"
+  source_ip_address      = "192.168.1.0/24"
+  destination_ip_address = "0.0.0.0/0"
+  destination_port       = "1234"
+
+  enabled = "true"
+}
+
+resource "opentelekomcloud_fw_policy_v2" "egress" {
+  name = "egress"
+
+  rules = [opentelekomcloud_fw_rule_v2.egress_test.id]
+}
+
+data "opentelekomcloud_networking_port_v2" "this" {
+  network_id   = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
+  device_owner = "network:router_interface_distributed"
+}
+
+resource "opentelekomcloud_fw_firewall_group_v2" "this" {
+  name             = "test"
+  egress_policy_id = opentelekomcloud_fw_policy_v2.egress.id
+  ports = [
+    data.opentelekomcloud_networking_port_v2.this.id
+  ]
+}
+`, common.DataSourceSubnet)
+}
