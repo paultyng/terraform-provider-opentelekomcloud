@@ -26,7 +26,10 @@ func TestAccDDMFlavorsV1DataSource_basic(t *testing.T) {
 }
 
 var testAccDDMFlavorsV1DataSourceBasic = `
+data "opentelekomcloud_ddm_engines_v1" "engine_list" {
+}
+
 data "opentelekomcloud_ddm_flavors_v1" "flavor_list" {
-  engine_id = "367b68a3-b48b-3d8a-b3a1-4c463a75a4b4"
+  engine_id = data.opentelekomcloud_ddm_engines_v1.engine_list.engines.0.id
 }
 `
