@@ -1217,6 +1217,13 @@ func (c *Config) EvpnV5Client(region string) (*golangsdk.ServiceClient, error) {
 	})
 }
 
+func (c *Config) HssV5Client(region string) (*golangsdk.ServiceClient, error) {
+	return openstack.NewHssV5(c.HwClient, golangsdk.EndpointOpts{
+		Region:       region,
+		Availability: c.getEndpointType(),
+	})
+}
+
 func reconfigProjectName(src Config, projectName ProjectName) (*Config, error) {
 	config := &Config{}
 	if err := copier.Copy(config, &src); err != nil {
