@@ -94,12 +94,12 @@ func dataSourceKmsKeyV1Read(_ context.Context, d *schema.ResourceData, meta inte
 	nextMarker := ""
 	var allKeys []keys.Key
 	for isListKey {
-		req := &keys.ListOpts{
+		req := keys.ListOpts{
 			KeyState: d.Get("key_state").(string),
 			Marker:   nextMarker,
 		}
 
-		v, err := keys.List(client, req).ExtractListKey()
+		v, err := keys.List(client, req)
 		if err != nil {
 			return diag.FromErr(err)
 		}

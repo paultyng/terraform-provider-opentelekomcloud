@@ -1,0 +1,4 @@
+---
+other:
+  - |
+    **[KMS]** Refactoring of KMS keys (`#2720 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2720>`_)
