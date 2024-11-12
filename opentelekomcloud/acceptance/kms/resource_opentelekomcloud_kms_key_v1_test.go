@@ -58,7 +58,7 @@ func testAccCheckKmsV1KeyDestroy(s *terraform.State) error {
 		if rs.Type != "opentelekomcloud_kms_key_v1" {
 			continue
 		}
-		v, err := keys.Get(client, rs.Primary.ID).ExtractKeyInfo()
+		v, err := keys.Get(client, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -85,7 +85,7 @@ func testAccCheckKmsV1KeyExists(n string, key *keys.Key) resource.TestCheckFunc 
 		if err != nil {
 			return fmt.Errorf("error creating OpenTelekomCloud KMSv1 client: %s", err)
 		}
-		found, err := keys.Get(client, rs.Primary.ID).ExtractKeyInfo()
+		found, err := keys.Get(client, rs.Primary.ID)
 		if err != nil {
 			return err
 		}

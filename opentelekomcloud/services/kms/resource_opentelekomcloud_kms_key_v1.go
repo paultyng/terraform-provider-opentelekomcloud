@@ -134,34 +134,31 @@ func resourceKmsKeyV1Create(ctx context.Context, d *schema.ResourceData, meta in
 		return fmterr.Errorf("error validating KMS key: %s", err)
 	}
 
-	createOpts := &keys.CreateOpts{
+	createOpts := keys.CreateOpts{
 		KeyAlias:       d.Get("key_alias").(string),
 		KeyDescription: d.Get("key_description").(string),
 		Realm:          d.Get("realm").(string),
 	}
 
 	log.Printf("[DEBUG] Create Options: %#v", createOpts)
-	key, err := keys.Create(client, createOpts).ExtractKeyInfo()
+	key, err := keys.Create(client, createOpts)
 	if err != nil {
 		return fmterr.Errorf("error creating OpenTelekomCloud key: %s", err)
 	}
 	log.Printf("[INFO] Key ID: %s", key.KeyID)
 
 	if d.Get("allow_cancel_deletion").(bool) {
-		keyGet, err := keys.Get(client, key.KeyID).ExtractKeyInfo()
+		keyGet, err := keys.Get(client, key.KeyID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		if keyGet.KeyState == PendingDeletionState {
-			cancelDeleteOpts := keys.CancelDeleteOpts{
-				KeyID: key.KeyID,
-			}
-			_, err = keys.CancelDelete(client, cancelDeleteOpts).Extract()
+			_, err = keys.CancelDelete(client, key.KeyID)
 			if err != nil {
 				return fmterr.Errorf("error disabling deletion of key: %s", err)
 			}
 
-			key, err := keys.EnableKey(client, key.KeyID).ExtractKeyInfo()
+			key, err := keys.EnableKey(client, key.KeyID)
 			if err != nil {
 				return fmterr.Errorf("error enabling key: %s", err)
 			}
@@ -190,7 +187,7 @@ func resourceKmsKeyV1Create(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	if !d.Get("is_enabled").(bool) {
-		disableKey, err := keys.DisableKey(client, key.KeyID).ExtractKeyInfo()
+		disableKey, err := keys.DisableKey(client, key.KeyID)
 		if err != nil {
 			return fmterr.Errorf("error disabling key: %s", err)
 		}
@@ -202,26 +199,26 @@ func resourceKmsKeyV1Create(ctx context.Context, d *schema.ResourceData, meta in
 
 	// enable rotation and change interval if necessary
 	if _, ok := d.GetOk("rotation_enabled"); ok {
-		rotationOpts := &keys.RotationOpts{
+		rotationOpts := keys.RotationOpts{
 			KeyID: key.KeyID,
 		}
 
-		keyRotation, err := keys.GetKeyRotationStatus(client, rotationOpts).ExtractResult()
+		keyRotation, err := keys.GetKeyRotationStatus(client, rotationOpts)
 		if err != nil {
 			return fmterr.Errorf("failed to fetch KMS key rotation status: %s", err)
 		}
 		if !keyRotation.Enabled {
-			err := keys.EnableKeyRotation(client, rotationOpts).ExtractErr()
+			err := keys.EnableKeyRotation(client, key.KeyID)
 			if err != nil {
 				return fmterr.Errorf("failed to enable KMS key rotation: %s", err)
 			}
 
 			if i, ok := d.GetOk("rotation_interval"); ok {
-				rotationOpts := &keys.RotationOpts{
+				rotationOpts := keys.RotationOpts{
 					KeyID:    key.KeyID,
 					Interval: i.(int),
 				}
-				err := keys.UpdateKeyRotationInterval(client, rotationOpts).ExtractErr()
+				err := keys.UpdateKeyRotationInterval(client, rotationOpts)
 				if err != nil {
 					return fmterr.Errorf("failed to change KMS key rotation interval: %s", err)
 				}
@@ -253,7 +250,7 @@ func resourceKmsKeyV1Read(ctx context.Context, d *schema.ResourceData, meta inte
 		return fmterr.Errorf(errCreationClient, err)
 	}
 
-	key, err := keys.Get(client, d.Id()).ExtractKeyInfo()
+	key, err := keys.Get(client, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -293,10 +290,10 @@ func resourceKmsKeyV1Read(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	// save rotation status
-	rotationOpts := &keys.RotationOpts{
+	rotationOpts := keys.RotationOpts{
 		KeyID: key.KeyID,
 	}
-	r, err := keys.GetKeyRotationStatus(client, rotationOpts).ExtractResult()
+	r, err := keys.GetKeyRotationStatus(client, rotationOpts)
 	if err == nil {
 		_ = d.Set("rotation_enabled", r.Enabled)
 		_ = d.Set("rotation_interval", r.Interval)
@@ -322,7 +319,7 @@ func resourceKmsKeyV1Update(ctx context.Context, d *schema.ResourceData, meta in
 			KeyID:    d.Id(),
 			KeyAlias: d.Get("key_alias").(string),
 		}
-		_, err = keys.UpdateAlias(client, updateAliasOpts).ExtractKeyInfo()
+		_, err = keys.UpdateAlias(client, updateAliasOpts)
 		if err != nil {
 			return fmterr.Errorf("error updating OpenTelekomCloud key: %s", err)
 		}
@@ -333,20 +330,20 @@ func resourceKmsKeyV1Update(ctx context.Context, d *schema.ResourceData, meta in
 			KeyID:          d.Id(),
 			KeyDescription: d.Get("key_description").(string),
 		}
-		_, err = keys.UpdateDes(client, updateDesOpts).ExtractKeyInfo()
+		_, err = keys.UpdateDes(client, updateDesOpts)
 		if err != nil {
 			return fmterr.Errorf("error updating OpenTelekomCloud key: %s", err)
 		}
 	}
 
 	if d.HasChange("is_enabled") {
-		key, err := keys.Get(client, d.Id()).ExtractKeyInfo()
+		key, err := keys.Get(client, d.Id())
 		if err != nil {
 			return fmterr.Errorf("describeKey got an error: %s", err)
 		}
 
 		if d.Get("is_enabled").(bool) && key.KeyState == DisabledState {
-			key, err := keys.EnableKey(client, d.Id()).ExtractKeyInfo()
+			key, err := keys.EnableKey(client, d.Id())
 			if err != nil {
 				return fmterr.Errorf("error enabling key: %s", err)
 			}
@@ -356,7 +353,7 @@ func resourceKmsKeyV1Update(ctx context.Context, d *schema.ResourceData, meta in
 		}
 
 		if !d.Get("is_enabled").(bool) && key.KeyState == EnabledState {
-			key, err := keys.DisableKey(client, d.Id()).ExtractKeyInfo()
+			key, err := keys.DisableKey(client, d.Id())
 			if err != nil {
 				return fmterr.Errorf("error disabling key: %s", err)
 			}
@@ -376,13 +373,10 @@ func resourceKmsKeyV1Update(ctx context.Context, d *schema.ResourceData, meta in
 	_, rotationEnabled := d.GetOk("rotation_enabled")
 	if d.HasChange("rotation_enabled") {
 		var rotationErr error
-		rotationOpts := &keys.RotationOpts{
-			KeyID: d.Id(),
-		}
 		if rotationEnabled {
-			rotationErr = keys.EnableKeyRotation(client, rotationOpts).ExtractErr()
+			rotationErr = keys.EnableKeyRotation(client, d.Id())
 		} else {
-			rotationErr = keys.DisableKeyRotation(client, rotationOpts).ExtractErr()
+			rotationErr = keys.DisableKeyRotation(client, d.Id())
 		}
 
 		if rotationErr != nil {
@@ -391,11 +385,11 @@ func resourceKmsKeyV1Update(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	if rotationEnabled && d.HasChange("rotation_interval") {
-		intervalOpts := &keys.RotationOpts{
+		intervalOpts := keys.RotationOpts{
 			KeyID:    d.Id(),
 			Interval: d.Get("rotation_interval").(int),
 		}
-		err := keys.UpdateKeyRotationInterval(client, intervalOpts).ExtractErr()
+		err := keys.UpdateKeyRotationInterval(client, intervalOpts)
 		if err != nil {
 			return fmterr.Errorf("failed to change key rotation interval: %s", err)
 		}
@@ -414,12 +408,12 @@ func resourceKmsKeyV1Delete(ctx context.Context, d *schema.ResourceData, meta in
 		return fmterr.Errorf(errCreationClient, err)
 	}
 
-	key, err := keys.Get(client, d.Id()).ExtractKeyInfo()
+	key, err := keys.Get(client, d.Id())
 	if err != nil {
 		return common.CheckDeletedDiag(d, err, "key")
 	}
 
-	deleteOpts := &keys.DeleteOpts{
+	deleteOpts := keys.DeleteOpts{
 		KeyID: d.Id(),
 	}
 	if v, ok := d.GetOk("pending_days"); ok {
@@ -430,26 +424,26 @@ func resourceKmsKeyV1Delete(ctx context.Context, d *schema.ResourceData, meta in
 	// in a pending deletion state from when the instance was terminated.
 	// If this is true, just move on. It'll eventually delete.
 	if key.KeyState != PendingDeletionState {
-		rotationOpts := &keys.RotationOpts{
+		rotationOpts := keys.RotationOpts{
 			KeyID: d.Id(),
 		}
-		keyRotation, err := keys.GetKeyRotationStatus(client, rotationOpts).ExtractResult()
+		keyRotation, err := keys.GetKeyRotationStatus(client, rotationOpts)
 		if err != nil {
 			return fmterr.Errorf("failed to fetch KMS key rotation status: %s", err)
 		}
 		if keyRotation.Enabled {
-			err := keys.DisableKeyRotation(client, rotationOpts).ExtractErr()
+			err := keys.DisableKeyRotation(client, d.Id())
 			if err != nil {
 				return fmterr.Errorf("failed to disable KMS key rotation: %s", err)
 			}
 		}
 
-		key, err = keys.Delete(client, deleteOpts).Extract()
+		keyDel, err := keys.Delete(client, deleteOpts)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		if key.KeyState != PendingDeletionState {
+		if keyDel.KeyState != PendingDeletionState {
 			return fmterr.Errorf("failed to delete key")
 		}
 	}
@@ -461,7 +455,7 @@ func resourceKmsKeyV1Delete(ctx context.Context, d *schema.ResourceData, meta in
 
 func keyV1StateRefreshFunc(client *golangsdk.ServiceClient, keyID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		v, err := keys.Get(client, keyID).ExtractKeyInfo()
+		v, err := keys.Get(client, keyID)
 		if err != nil {
 			if _, ok := err.(golangsdk.ErrDefault404); ok {
 				return v, PendingDeletionState, nil

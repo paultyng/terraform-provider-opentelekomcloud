@@ -54,13 +54,13 @@ func dataSourceKmsDataKeyV1Read(_ context.Context, d *schema.ResourceData, meta 
 		return fmterr.Errorf("error creating OpenTelekomCloud kms key client: %s", err)
 	}
 
-	req := &keys.DataEncryptOpts{
+	req := keys.DataEncryptOpts{
 		KeyID:             d.Get("key_id").(string),
 		EncryptionContext: d.Get("encryption_context").(string),
 		DatakeyLength:     d.Get("datakey_length").(string),
 	}
 	log.Printf("[DEBUG] KMS get data key for key: %s", d.Get("key_id").(string))
-	v, err := keys.DataEncryptGet(KmsDataKeyV1Client, req).ExtractDataKey()
+	v, err := keys.DataEncryptGet(KmsDataKeyV1Client, req)
 	if err != nil {
 		return diag.FromErr(err)
 	}
