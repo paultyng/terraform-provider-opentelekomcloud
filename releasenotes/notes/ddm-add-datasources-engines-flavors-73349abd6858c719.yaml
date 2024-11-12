@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    **[DDM]** New Data Sources: ``opentelekomcloud_ddm_engines_v1`` and ``opentelekomcloud_ddm_flavors_v1`` (`#2719 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2719>`_)

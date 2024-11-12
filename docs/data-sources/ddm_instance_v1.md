@@ -2,7 +2,7 @@
 subcategory: "Distributed Database Middleware (DDM)"
 layout: "opentelekomcloud"
 page_title: "OpenTelekomCloud: opentelekomcloud_ddm_instance_v1"
-sidebar_current: "docs-opentelekomcloud-resource-ddm-instance-v1"
+sidebar_current: "docs-opentelekomcloud-datasource-ddm-instance-v1"
 description: |-
   Get a DDM Instance resource from OpenTelekomCloud.
 ---

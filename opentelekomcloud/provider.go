@@ -35,6 +35,7 @@ import (
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/fgs"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/fw"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/gaussdb"
+	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/hss"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/iam"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/ims"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/kms"
@@ -288,6 +289,8 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_dcs_product_v1":                    dcs.DataSourceDcsProductV1(),
 			"opentelekomcloud_deh_host_v1":                       deh.DataSourceDEHHostV1(),
 			"opentelekomcloud_deh_server_v1":                     deh.DataSourceDEHServersV1(),
+			"opentelekomcloud_ddm_engines_v1":                    ddm.DataSourceDdmEnginesV1(),
+			"opentelekomcloud_ddm_flavors_v1":                    ddm.DataSourceDdmFlavorsV1(),
 			"opentelekomcloud_ddm_instance_v1":                   ddm.DataSourceDdmInstanceV1(),
 			"opentelekomcloud_dds_flavors_v3":                    dds.DataSourceDdsFlavorV3(),
 			"opentelekomcloud_dds_instance_v3":                   dds.DataSourceDdsInstanceV3(),
@@ -460,6 +463,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_fw_policy_v2":                              fw.ResourceFWPolicyV2(),
 			"opentelekomcloud_fw_rule_v2":                                fw.ResourceFWRuleV2(),
 			"opentelekomcloud_gaussdb_mysql_instance_v3":                 gaussdb.ResourceGaussDBInstanceV3(),
+			"opentelekomcloud_hss_host_group_v5":                         hss.ResourceHostGroup(),
 			"opentelekomcloud_identity_acl_v3":                           iam.ResourceIdentityAclV3(),
 			"opentelekomcloud_identity_agency_v3":                        iam.ResourceIdentityAgencyV3(),
 			"opentelekomcloud_identity_credential_v3":                    iam.ResourceIdentityCredentialV3(),

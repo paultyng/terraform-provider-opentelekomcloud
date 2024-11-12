@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    **New Resource:** ``opentelekomcloud_hss_host_group_v5`` (`#2718 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2718>`_)
