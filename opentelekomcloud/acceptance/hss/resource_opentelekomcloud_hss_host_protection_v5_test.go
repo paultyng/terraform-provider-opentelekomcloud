@@ -21,6 +21,9 @@ func getHostProtectionFunc(conf *cfg.Config, state *terraform.ResourceState) (in
 		return nil, fmt.Errorf("error creating HSS v5 client: %s", err)
 	}
 	hostList, err := host.ListHost(client, host.ListHostOpts{HostID: state.Primary.ID})
+	if err != nil {
+		return nil, fmt.Errorf("error querying OpenTelekomCloud HSS hosts: %s", err)
+	}
 	if len(hostList) == 0 || hostList[0].ProtectStatus == string(hss.ProtectStatusClosed) {
 		return nil, golangsdk.ErrDefault404{}
 	}
