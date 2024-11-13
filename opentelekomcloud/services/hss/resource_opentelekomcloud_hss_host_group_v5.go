@@ -51,9 +51,7 @@ func ResourceHostGroup() *schema.Resource {
 			},
 			"region": {
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
-				ForceNew: true,
 			},
 			"risk_host_num": {
 				Type:     schema.TypeInt,

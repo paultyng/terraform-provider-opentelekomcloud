@@ -7,6 +7,9 @@ description: |-
   Manages an HSS host group Service resource within OpenTelekomCloud.
 ---
 
+Up-to-date reference of API arguments for HSS host group you can get at
+[documentation portal](https://docs.otc.t-systems.com/host-security-service/api-ref/api_description/server_management/creating_a_server_group.html#addhostsgroup).
+
 # opentelekomcloud_hss_host_group_v5
 
 Manages an HSS host group resource within OpenTelekomCloud.
