@@ -4,7 +4,7 @@ layout: "opentelekomcloud"
 page_title: "OpenTelekomCloud: opentelekomcloud_hss_host_protection_v5"
 sidebar_current: "docs-opentelekomcloud-resource-hss-host-protection-v5"
 description: |-
-Manages an HSS host protection Service resource within OpenTelekomCloud.
+  Manages an HSS host protection Service resource within OpenTelekomCloud.
 ---
 
 Up-to-date reference of API arguments for HSS host protection you can get at
