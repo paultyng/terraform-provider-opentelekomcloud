@@ -11,3 +11,9 @@ const (
 	ProtectStatusClosed ProtectStatus = "closed"
 	ProtectStatusOpened ProtectStatus = "opened"
 )
+
+const (
+	protectionVersionNull         string = "hss.version.null"
+	hostAgentStatusOnline         string = "online"
+	getProtectionHostNeedRetryMsg string = "The host cannot be found temporarily, please try again later."
+)
