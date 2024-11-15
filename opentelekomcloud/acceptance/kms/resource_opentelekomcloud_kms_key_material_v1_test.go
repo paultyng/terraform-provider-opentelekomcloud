@@ -69,6 +69,9 @@ func TestAccKmsKeyMaterial_Symmetric(t *testing.T) {
 }
 
 func testAccKmsKeyMaterial_Symmetric(t *testing.T) string {
+	if env.OS_KMS_ID == "" {
+		t.Skip("OS_KMS_ID is required for this test")
+	}
 	client, err := common.TestAccProvider.Meta().(*cfg.Config).KmsKeyV1Client(env.OS_REGION_NAME)
 	if err != nil {
 		t.Fatalf("error creating KMS client: %s", err)
@@ -94,7 +97,6 @@ resource "opentelekomcloud_kms_key_material_v1" "test" {
   key_id                 = "%[1]s"
   import_token           = "%[2]s"
   encrypted_key_material = "%[3]s"
-  expiration_time        = "2999886177"
 }
 `, env.OS_KMS_ID, params.ImportToken, keyMaterial)
 }
