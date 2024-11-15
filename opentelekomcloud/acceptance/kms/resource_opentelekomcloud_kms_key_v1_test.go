@@ -172,7 +172,7 @@ func TestAccKmsKey_rotation(t *testing.T) {
 
 func TestAccKmsKey_cancelDeletion(t *testing.T) {
 	var key keys.Key
-	createName := "test_key_gopher"
+	createName := fmt.Sprintf("kms_%s", acctest.RandString(5))
 	resourceName := "opentelekomcloud_kms_key_v1.key_1"
 
 	resource.Test(t, resource.TestCase{
@@ -194,7 +194,7 @@ func TestAccKmsKey_cancelDeletion(t *testing.T) {
 
 func TestAccKmsKey_cancelDeletionWithRotation(t *testing.T) {
 	var key keys.Key
-	createName := "test_key_gopher_2"
+	createName := fmt.Sprintf("kms_%s", acctest.RandString(5))
 	resourceName := "opentelekomcloud_kms_key_v1.key_1"
 
 	resource.Test(t, resource.TestCase{
@@ -208,6 +208,27 @@ func TestAccKmsKey_cancelDeletionWithRotation(t *testing.T) {
 					testAccCheckKmsV1KeyExists(resourceName, &key),
 					resource.TestCheckResourceAttr(resourceName, "key_alias", createName),
 					resource.TestCheckResourceAttr(resourceName, "is_enabled", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccKmsKey_externalKey(t *testing.T) {
+	var key keys.Key
+	createName := fmt.Sprintf("kms_%s", acctest.RandString(5))
+	resourceName := "opentelekomcloud_kms_key_v1.key_1"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { common.TestAccPreCheck(t) },
+		ProviderFactories: common.TestAccProviderFactories,
+		CheckDestroy:      testAccCheckKmsV1KeyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccKmsV1Key_External(createName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckKmsV1KeyExists(resourceName, &key),
+					resource.TestCheckResourceAttr(resourceName, "origin", "external"),
 				),
 			},
 		},
@@ -291,6 +312,16 @@ resource "opentelekomcloud_kms_key_v1" "key_1" {
   rotation_enabled      = true
   rotation_interval     = 90
   allow_cancel_deletion = true
+}
+`, rName)
+}
+
+func testAccKmsV1Key_External(rName string) string {
+	return fmt.Sprintf(`
+resource "opentelekomcloud_kms_key_v1" "key_1" {
+  key_alias       = "%s"
+  key_description = "A test key"
+  origin          = "external"
 }
 `, rName)
 }
