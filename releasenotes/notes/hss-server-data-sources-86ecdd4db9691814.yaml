@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    **New Data Resource:** ``opentelekomcloud_hss_quotas_v5`` (`#2732 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2732>`_)
+  - |
+    **New Data Resource:** ``opentelekomcloud_hss_host_group_v5`` (`#2732 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2732>`_)
+  - |
+    **New Data Resource:** ``opentelekomcloud_hss_hosts_v5`` (`#2732 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2732>`_)

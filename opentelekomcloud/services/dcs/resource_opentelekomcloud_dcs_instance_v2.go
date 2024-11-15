@@ -1212,14 +1212,14 @@ func setBandWidthInfo(bandWidthInfo *instance.BandWidthInfo) []map[string]interf
 	return []map[string]interface{}{
 		{
 			"bandwidth":            bandWidthInfo.BandWidth,
-			"begin_time":           FormatTimeStampRFC3339(int64(bandWidthInfo.BeginTime)/1000, false),
-			"current_time":         FormatTimeStampRFC3339(int64(bandWidthInfo.CurrentTime)/1000, false),
-			"end_time":             FormatTimeStampRFC3339(int64(bandWidthInfo.EndTime)/1000, false),
+			"begin_time":           common.FormatTimeStampRFC3339(int64(bandWidthInfo.BeginTime)/1000, false),
+			"current_time":         common.FormatTimeStampRFC3339(int64(bandWidthInfo.CurrentTime)/1000, false),
+			"end_time":             common.FormatTimeStampRFC3339(int64(bandWidthInfo.EndTime)/1000, false),
 			"expand_count":         bandWidthInfo.ExpandCount,
 			"expand_effect_time":   bandWidthInfo.ExpandEffectTime,
 			"expand_interval_time": bandWidthInfo.ExpandIntervalTime,
 			"max_expand_count":     bandWidthInfo.MaxExpandCount,
-			"next_expand_time":     FormatTimeStampRFC3339(int64(bandWidthInfo.NextExpandTime)/1000, false),
+			"next_expand_time":     common.FormatTimeStampRFC3339(int64(bandWidthInfo.NextExpandTime)/1000, false),
 			"task_running":         bandWidthInfo.TaskRunning,
 		},
 	}
