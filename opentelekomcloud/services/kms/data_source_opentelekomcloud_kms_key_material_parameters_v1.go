@@ -82,14 +82,6 @@ func dataSourceKmsImportParamsV1Read(_ context.Context, d *schema.ResourceData, 
 				return nil
 			case "2":
 				d.SetId(d.Get("key_id").(string))
-				mErr := multierror.Append(
-					d.Set("import_token", d.Get("import_token").(string)),
-					d.Set("expiration_time", d.Get("expiration_time").(int)),
-					d.Set("public_key", d.Get("public_key").(string)),
-				)
-				if err := mErr.ErrorOrNil(); err != nil {
-					return diag.FromErr(err)
-				}
 				return nil
 			default:
 				return fmterr.Errorf("unexpected key state: %s", keyGet.KeyState)

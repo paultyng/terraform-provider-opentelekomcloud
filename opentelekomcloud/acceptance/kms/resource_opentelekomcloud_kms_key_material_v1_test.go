@@ -43,7 +43,6 @@ func TestAccKmsKeyMaterial_Symmetric(t *testing.T) {
 		PreCheck: func() {
 			// The key status must be pending import.
 			common.TestAccPreCheck(t)
-			common.TestAccPreCheckKmsKeyID(t)
 		},
 		ProviderFactories: common.TestAccProviderFactories,
 		CheckDestroy:      rc.CheckResourceDestroy(),

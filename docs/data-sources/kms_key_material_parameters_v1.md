@@ -16,7 +16,7 @@ Use this data source to get the data required to import key material into a CMK 
 
 ~> **Warning** This data source returns parameters for a CMK in `Pending_import` state.
   Once the key is successfully imported and the state changes to `Enabled`, the data source will no longer fetch
-  new parameters and will preserve existing data. If other resources utilize fields from this data source, consider
+  new parameters and its computed attributes will be nulled. If other resources utilize fields from this data source, consider
   adding `lifecycle { ignore_changes = [...] }` to handle state transitions properly.
 
 ## Example Usage
