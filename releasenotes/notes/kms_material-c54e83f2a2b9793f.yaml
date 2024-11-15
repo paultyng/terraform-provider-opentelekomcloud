@@ -1,9 +1,9 @@
 ---
 features:
   - |
-    **[KMS]** New resource ``resource/opentelekomcloud_kms_key_material_v1`` (`# <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/>`_)
+    **[KMS]** New resource ``resource/opentelekomcloud_kms_key_material_v1`` (`#2731 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2731>`_)
   - |
-    **[KMS]** New data source ``data_source/opentelekomcloud_kms_key_material_parameters_v1`` (`# <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/>`_)
+    **[KMS]** New data source ``data_source/opentelekomcloud_kms_key_material_parameters_v1`` (`#2731 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2731>`_)
 enhancements:
   - |
-    **[KMS]** Add origin support for ``resource/opentelekomcloud_kms_key_v1`` (`# <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/>`_)
+    **[KMS]** Add origin support for ``resource/opentelekomcloud_kms_key_v1`` (`#2731 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2731>`_)
