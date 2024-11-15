@@ -194,3 +194,10 @@ func TestAccPreCheckOBS(t *testing.T) {
 		t.Skip("HW_ACCESS_KEY and HW_SECRET_KEY must be set for OBS acceptance tests")
 	}
 }
+
+// lintignore:AT003
+func TestAccPreCheckKmsKeyID(t *testing.T) {
+	if env.OS_KMS_ID == "" {
+		t.Skip("OS_KMS_ID must be set for KMS key material acceptance tests.")
+	}
+}
