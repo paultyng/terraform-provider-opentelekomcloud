@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    **[DMS]** Add new resource ``resource/opentelekomcloud_dms_consumer_group_v2`` (`#2733 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2733>`_).
