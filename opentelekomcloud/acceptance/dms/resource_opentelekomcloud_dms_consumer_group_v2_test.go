@@ -55,6 +55,9 @@ func TestAccDmsConsumerGroupV2_basic(t *testing.T) {
 				ResourceName:      resourceGroupV2Name,
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"description",
+				},
 			},
 		},
 	})
@@ -92,6 +95,7 @@ resource "opentelekomcloud_dms_instance_v2" "instance_1" {
 resource "opentelekomcloud_dms_consumer_group_v2" "group_1" {
   instance_id = opentelekomcloud_dms_instance_v2.instance_1.id
   group_name  = "%s"
+  description = "Test consumer group"
 }
 
 
