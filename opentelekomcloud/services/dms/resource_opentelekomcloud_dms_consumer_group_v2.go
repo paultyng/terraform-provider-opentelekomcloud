@@ -51,6 +51,10 @@ func ResourceDmsConsumerGroupV2() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"coordinator_id": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
 			"members": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -179,6 +183,7 @@ func resourceDmsConsumerGroupV2Read(ctx context.Context, d *schema.ResourceData,
 		d.Set("instance_id", instanceId),
 		d.Set("group_name", consumerGroup.GroupId),
 		d.Set("state", consumerGroup.State),
+		d.Set("coordinator_id", consumerGroup.CoordinatorId),
 		d.Set("assignment_strategy", consumerGroup.AssignmentStrategy),
 	)
 
