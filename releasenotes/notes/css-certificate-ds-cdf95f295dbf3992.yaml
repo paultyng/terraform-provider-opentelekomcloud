@@ -1,0 +1,4 @@
+---
+features:
+  |
+  **[DMS]** Add new data source ``data-source/opentelekomcloud_css_certificate_v1`` (`#2734 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2734>`_)
