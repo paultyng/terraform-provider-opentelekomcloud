@@ -16,6 +16,7 @@ import (
 func ResourceDmsReassignPartitionsV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDmsReassignPartitionsV2Create,
+		ReadContext:   resourceReassignPartitionsV2Read,
 		DeleteContext: resourceReassignPartitionsV2Delete,
 
 		Schema: map[string]*schema.Schema{
@@ -92,6 +93,7 @@ func ResourceDmsReassignPartitionsV2() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
+				Default:  false,
 			},
 			"region": {
 				Type:     schema.TypeString,
@@ -120,8 +122,8 @@ func resourceDmsReassignPartitionsV2Create(ctx context.Context, d *schema.Resour
 		Reassignments: getPartitionReassignments(d),
 		Throttle:      d.Get("throttle").(int),
 		IsSchedule:    d.Get("is_schedule").(bool),
-		ExecuteAt:     d.Get("execute_at").(int64),
 		TimeEstimate:  d.Get("time_estimate").(bool),
+		ExecuteAt:     int64(d.Get("execute_at").(int)),
 	}
 
 	initResp, err := management.InitPartitionReassigning(client, instanceId, &createReassignPartitionOpts)
@@ -134,6 +136,19 @@ func resourceDmsReassignPartitionsV2Create(ctx context.Context, d *schema.Resour
 		d.Set("region", config.GetRegion(d)),
 		d.Set("instance_id", instanceId),
 		d.Set("reassignment_time", initResp.ReassignmentTime),
+	)
+
+	return diag.FromErr(mErr.ErrorOrNil())
+}
+
+func resourceReassignPartitionsV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	config := meta.(*cfg.Config)
+	instanceId := d.Get("instance_id").(string)
+	mErr := multierror.Append(
+		nil,
+		d.Set("region", config.GetRegion(d)),
+		d.Set("instance_id", instanceId),
+		d.Set("reassignment_time", d.Get("reassignment_time").(string)),
 	)
 
 	return diag.FromErr(mErr.ErrorOrNil())
