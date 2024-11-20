@@ -280,6 +280,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_compute_instances_v2":              ecs.DataSourceComputeInstancesV2(),
 			"opentelekomcloud_csbs_backup_v1":                    csbs.DataSourceCSBSBackupV1(),
 			"opentelekomcloud_csbs_backup_policy_v1":             csbs.DataSourceCSBSBackupPolicyV1(),
+			"opentelekomcloud_css_certificate_v1":                css.DataSourceCSSCertificateV1(),
 			"opentelekomcloud_css_flavor_v1":                     css.DataSourceCSSFlavorV1(),
 			"opentelekomcloud_cts_tracker_v1":                    cts.DataSourceCTSTrackerV1(),
 			"opentelekomcloud_direct_connect_v2":                 dcaas.DataSourceDirectConnectV2(),
