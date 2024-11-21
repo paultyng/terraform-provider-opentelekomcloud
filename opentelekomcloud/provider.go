@@ -428,6 +428,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_dc_hosted_connect_v3":                      dcaas.ResourceHostedConnectV3(),
 			"opentelekomcloud_dc_virtual_gateway_v3":                     dcaas.ResourceVirtualGatewayV3(),
 			"opentelekomcloud_dc_virtual_interface_v3":                   dcaas.ResourceVirtualInterfaceV3(),
+			"opentelekomcloud_dc_virtual_interface_peer_v3":              dcaas.ResourceVirtualInterfacePeerV3(),
 			"opentelekomcloud_dcs_instance_v1":                           dcs.ResourceDcsInstanceV1(),
 			"opentelekomcloud_dcs_instance_v2":                           dcs.ResourceDcsInstanceV2(),
 			"opentelekomcloud_ddm_instance_v1":                           ddm.ResourceDdmInstanceV1(),
