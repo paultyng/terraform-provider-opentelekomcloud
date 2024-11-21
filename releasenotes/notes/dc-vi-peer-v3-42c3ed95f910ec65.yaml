@@ -1,0 +1,4 @@
+---
+features:
+  |
+  **[DCAAS]** Add new resource ``resource/opentelekomcloud_dc_virtual_interface_peer_v3`` (`#2738 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2738>`_)
