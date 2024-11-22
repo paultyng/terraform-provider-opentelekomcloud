@@ -556,15 +556,12 @@ func resourceCCENodePoolV3Update(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	updateOpts := nodepools.UpdateOpts{
-		Kind:       "NodePool",
-		ApiVersion: "v3",
 		Metadata: nodepools.UpdateMetaData{
 			Name: d.Get("name").(string),
 		},
 		Spec: nodepools.UpdateSpec{
-			Type:             "vm",
 			InitialNodeCount: d.Get("initial_node_count").(int),
-			Autoscaling: nodepools.AutoscalingSpec{
+			Autoscaling: nodepools.UpdateAutoscalingSpec{
 				Enable:                d.Get("scale_enable").(bool),
 				MinNodeCount:          d.Get("min_node_count").(int),
 				MaxNodeCount:          d.Get("max_node_count").(int),
