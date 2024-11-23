@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    **[CCE]** Removed discarded parameters in ``resource/opentelekomcloud_cce_node_pool_v3`` (`#2743 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2743>`_)
