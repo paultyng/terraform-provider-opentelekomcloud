@@ -32,6 +32,7 @@ func TestAccIdentityV3Password_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourcePasswordPolicyName, "minimum_password_age", "0"),
 					resource.TestCheckResourceAttr(resourcePasswordPolicyName, "number_of_recent_passwords_disallowed", "0"),
 					resource.TestCheckResourceAttr(resourcePasswordPolicyName, "password_not_username_or_invert", "true"),
+					resource.TestCheckResourceAttr(resourcePasswordPolicyName, "password_char_combination", "4"),
 				),
 			},
 			{
@@ -44,6 +45,7 @@ func TestAccIdentityV3Password_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourcePasswordPolicyName, "minimum_password_age", "0"),
 					resource.TestCheckResourceAttr(resourcePasswordPolicyName, "number_of_recent_passwords_disallowed", "0"),
 					resource.TestCheckResourceAttr(resourcePasswordPolicyName, "password_not_username_or_invert", "true"),
+					resource.TestCheckResourceAttr(resourcePasswordPolicyName, "password_char_combination", "3"),
 				),
 			},
 			{
@@ -106,6 +108,7 @@ resource "opentelekomcloud_identity_password_policy_v3" "pol_1" {
   number_of_recent_passwords_disallowed = 0
   password_not_username_or_invert       = true
   password_validity_period              = 179
+  password_char_combination             = 4
 }
 `
 
@@ -117,5 +120,6 @@ resource "opentelekomcloud_identity_password_policy_v3" "pol_1" {
   number_of_recent_passwords_disallowed = 0
   password_not_username_or_invert       = true
   password_validity_period              = 180
+  password_char_combination             = 3
 }
 `
