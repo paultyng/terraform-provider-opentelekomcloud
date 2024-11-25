@@ -63,6 +63,12 @@ func ResourceIdentityPasswordPolicyV3() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.IntBetween(0, 180),
 			},
+			"password_char_combination": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.IntBetween(2, 4),
+			},
 			"maximum_password_length": {
 				Type:     schema.TypeInt,
 				Computed: true,
@@ -96,6 +102,7 @@ func resourceIdentityPasswordPolicyV3Create(ctx context.Context, d *schema.Resou
 		NumberOfRecentPasswordsDisallowed: pointerto.Int(d.Get("number_of_recent_passwords_disallowed").(int)),
 		PasswordNotUsernameOrInvert:       pointerto.Bool(d.Get("password_not_username_or_invert").(bool)),
 		PasswordValidityPeriod:            pointerto.Int(d.Get("password_validity_period").(int)),
+		PasswordCharCombination:           pointerto.Int(d.Get("password_char_combination").(int)),
 	}
 	_, err = security.UpdatePasswordPolicy(client, domainID, passPolicyOpts)
 	if err != nil {
@@ -133,6 +140,7 @@ func resourceIdentityPasswordPolicyV3Read(ctx context.Context, d *schema.Resourc
 		d.Set("password_not_username_or_invert", passPolicy.PasswordNotUsernameOrInvert),
 		d.Set("password_validity_period", passPolicy.PasswordValidityPeriod),
 		d.Set("password_requirements", passPolicy.PasswordRequirements),
+		d.Set("password_char_combination", passPolicy.PasswordCharCombination),
 	)
 
 	if err = mErr.ErrorOrNil(); err != nil {
@@ -152,7 +160,7 @@ func resourceIdentityPasswordPolicyV3Update(ctx context.Context, d *schema.Resou
 
 	if d.HasChanges("maximum_consecutive_identical_chars", "minimum_password_age",
 		"minimum_password_length", "number_of_recent_passwords_disallowed",
-		"password_not_username_or_invert", "password_validity_period") {
+		"password_not_username_or_invert", "password_validity_period", "password_char_combination") {
 		passPolicyOpts := security.UpdatePasswordPolicyOpts{
 			MaximumConsecutiveIdenticalChars:  pointerto.Int(d.Get("maximum_consecutive_identical_chars").(int)),
 			MinimumPasswordAge:                pointerto.Int(d.Get("minimum_password_age").(int)),
@@ -160,6 +168,7 @@ func resourceIdentityPasswordPolicyV3Update(ctx context.Context, d *schema.Resou
 			NumberOfRecentPasswordsDisallowed: pointerto.Int(d.Get("number_of_recent_passwords_disallowed").(int)),
 			PasswordNotUsernameOrInvert:       pointerto.Bool(d.Get("password_not_username_or_invert").(bool)),
 			PasswordValidityPeriod:            pointerto.Int(d.Get("password_validity_period").(int)),
+			PasswordCharCombination:           pointerto.Int(d.Get("password_char_combination").(int)),
 		}
 		_, err = security.UpdatePasswordPolicy(client, d.Id(), passPolicyOpts)
 		if err != nil {
@@ -188,6 +197,7 @@ func resourceIdentityPasswordPolicyV3Delete(ctx context.Context, d *schema.Resou
 			NumberOfRecentPasswordsDisallowed: pointerto.Int(1),
 			PasswordNotUsernameOrInvert:       pointerto.Bool(true),
 			PasswordValidityPeriod:            pointerto.Int(0),
+			PasswordCharCombination:           pointerto.Int(2),
 		})
 	if err != nil {
 		return diag.Errorf("error resetting the IAM account password policy: %s", err)

@@ -26,6 +26,7 @@ cloud to use this resource. Please refer to [User Management Model](https://docs
   +  `number_of_recent_passwords_disallowed` = 1
   +  `password_not_username_or_invert` = true
   +  `password_validity_period` = 0
+  +  `password_char_combination` = 2
 
 ## Example Usage
 
@@ -37,6 +38,7 @@ resource "opentelekomcloud_identity_password_policy_v3" "policy_1" {
   number_of_recent_passwords_disallowed = 0
   password_not_username_or_invert       = true
   password_validity_period              = 179
+  password_char_combination             = 3
 }
 ```
 
@@ -61,6 +63,9 @@ The following arguments are supported:
 
 * `password_validity_period` - (Optional, Int) Password validity period (days).
   Value range: 0-180. Value 0 indicates that this requirement does not apply.
+
+* `password_char_combination` - (Optional, Int) Minimum number of character types that a password must contain.
+  Value range: 2-4.
 
 
 ## Attribute Reference
