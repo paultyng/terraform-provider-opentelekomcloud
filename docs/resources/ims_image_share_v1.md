@@ -4,7 +4,7 @@ layout: "opentelekomcloud"
 page_title: "OpenTelekomCloud: opentelekomcloud_ims_image_share_v1"
 sidebar_current: "docs-opentelekomcloud-resource-ims-image-share-v1"
 description: |-
-Manages a IMS Image Share resource within OpenTelekomCloud.
+  Manages a IMS Image Share resource within OpenTelekomCloud.
 ---
 
 # opentelekomcloud_ims_image_share_v1

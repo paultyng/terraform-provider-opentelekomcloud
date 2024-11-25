@@ -34,7 +34,7 @@ func TestAccImsImageShare_basic(t *testing.T) {
 	shareProjectID := os.Getenv("OS_PROJECT_ID_2")
 	shareProjectID2 := os.Getenv("OS_PROJECT_ID_3")
 	if privateImageID == "" || shareProjectID == "" {
-		t.Skip("OS_PRIVATE_IMAGE_ID or OS_PROJECT_ID_2 are empty, but test requires")
+		t.Skip("OS_PRIVATE_IMAGE_ID, OS_PROJECT_ID_2 or OS_PROJECT_ID_3 are empty, but test requires")
 	}
 
 	var obj interface{}

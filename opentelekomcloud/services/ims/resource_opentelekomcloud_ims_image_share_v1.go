@@ -61,11 +61,11 @@ func resourceImsImageShareCreate(ctx context.Context, d *schema.ResourceData, me
 		Projects: common.ExpandToStringSlice(d.Get("target_project_ids").(*schema.Set).List()),
 	})
 	if err != nil {
-		return fmterr.Errorf("error requesting share for private image: %w", err)
+		return fmterr.Errorf("error requesting OpenTelekomCloud ims share for private image: %w", err)
 	}
 	err = waitForImageShareOrAcceptJobSuccess(ctx, d, client, *jobId, schema.TimeoutCreate)
 	if err != nil {
-		return fmterr.Errorf("error while waiting share for private image to become active: %w", err)
+		return fmterr.Errorf("error while waiting OpenTelekomCloud ims share for private image to become active: %w", err)
 	}
 	d.SetId(sourceImageId)
 
@@ -99,11 +99,11 @@ func resourceImsImageShareUpdate(ctx context.Context, d *schema.ResourceData, me
 				Projects: common.ExpandToStringSlice(shareProjectIds.List()),
 			})
 			if err != nil {
-				return fmterr.Errorf("error requesting share for private image: %w", err)
+				return fmterr.Errorf("error requesting OpenTelekomCloud ims share for private image: %w", err)
 			}
 			err = waitForImageShareOrAcceptJobSuccess(ctx, d, client, *jobId, schema.TimeoutCreate)
 			if err != nil {
-				return fmterr.Errorf("error while waiting share for private image to become active: %w", err)
+				return fmterr.Errorf("error while waiting OpenTelekomCloud ims share for private image to become active: %w", err)
 			}
 		}
 		if unShareProjectIds.Len() > 0 {
@@ -112,11 +112,11 @@ func resourceImsImageShareUpdate(ctx context.Context, d *schema.ResourceData, me
 				Projects: common.ExpandToStringSlice(unShareProjectIds.List()),
 			})
 			if err != nil {
-				return fmterr.Errorf("error requesting share for private image: %w", err)
+				return fmterr.Errorf("error requesting OpenTelekomCloud ims share for private image: %w", err)
 			}
 			err = waitForImageShareOrAcceptJobSuccess(ctx, d, client, *jobId, schema.TimeoutDelete)
 			if err != nil {
-				return fmterr.Errorf("error while waiting share for private image to become deleted: %w", err)
+				return fmterr.Errorf("error while waiting OpenTelekomCloud ims share for private image to become deleted: %w", err)
 			}
 		}
 	}
@@ -137,11 +137,11 @@ func resourceImsImageShareDelete(ctx context.Context, d *schema.ResourceData, me
 		Projects: common.ExpandToStringSlice(projectIds.(*schema.Set).List()),
 	})
 	if err != nil {
-		return fmterr.Errorf("error requesting delete share for private image: %w", err)
+		return fmterr.Errorf("error requesting delete OpenTelekomCloud ims share for private image: %w", err)
 	}
 	err = waitForImageShareOrAcceptJobSuccess(ctx, d, client, *jobId, schema.TimeoutDelete)
 	if err != nil {
-		return fmterr.Errorf("error while waiting share for private image to become deleted: %w", err)
+		return fmterr.Errorf("error while waiting OpenTelekomCloud ims share for private image to become deleted: %w", err)
 	}
 
 	return nil
