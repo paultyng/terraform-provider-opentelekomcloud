@@ -495,6 +495,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_ims_data_image_v2":                         ims.ResourceImsDataImageV2(),
 			"opentelekomcloud_ims_image_v2":                              ims.ResourceImsImageV2(),
 			"opentelekomcloud_ims_image_share_v1":                        ims.ResourceImsImageShareV1(),
+			"opentelekomcloud_ims_image_share_accept_v1":                 ims.ResourceImsImageShareAcceptV1(),
 			"opentelekomcloud_kms_grant_v1":                              kms.ResourceKmsGrantV1(),
 			"opentelekomcloud_kms_key_v1":                                kms.ResourceKmsKeyV1(),
 			"opentelekomcloud_kms_key_material_v1":                       kms.ResourceKmsKeyMaterialV1(),
