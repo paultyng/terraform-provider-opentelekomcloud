@@ -63,7 +63,7 @@ func TestAccImsImageShareAccept_basic(t *testing.T) {
 func testImsImageShareAccept_basic(sharedImageID string) string {
 	return fmt.Sprintf(`
 resource "opentelekomcloud_ims_image_share_accept_v1" "act" {
- image_id = "%s"
+  image_id = "%s"
 }
 `, sharedImageID)
 }
