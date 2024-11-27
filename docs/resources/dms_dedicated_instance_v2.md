@@ -15,7 +15,7 @@ Up-to-date reference of API arguments for DMS instance you can get at
 Manages a DMS instance in the OpenTelekomCloud DMS Service (Kafka Premium/Platinum).
 ## Example Usage
 
-### Create a Kafka instance using flavor ID
+### Create a cluster Kafka instance
 
 ```hcl
 variable "vpc_id" {}
@@ -55,6 +55,54 @@ resource "opentelekomcloud_dms_dedicated_instance_v2" "test" {
 }
 ```
 
+### Create a single-node Kafka instance with floating ip
+
+```hcl
+variable "vpc_id" {}
+variable "subnet_id" {}
+variable "security_group_id" {}
+variable "access_password" {}
+
+data "opentelekomcloud_dms_az_v1" "az_1" {}
+
+data "opentelekomcloud_dms_flavor_v2" "test" {
+  type      = "single"
+  flavor_id = "s6.2u4g.single.small"
+}
+
+locals {
+  flavor = data.opentelekomcloud_dms_flavor_v2.test.flavors[0]
+}
+
+resource "opentelekomcloud_networking_floatingip_v2" "fip_1" {
+}
+
+resource "opentelekomcloud_dms_dedicated_instance_v2" "instance_1" {
+  name = "kafka-single-node"
+
+  vpc_id            = var.vpc_ip
+  network_id        = var.subnet_id
+  security_group_id = var.security_group_id
+
+  flavor_id         = local.flavor.id
+  storage_spec_code = local.flavor.ios[0].storage_spec_code
+  available_zones   = [data.opentelekomcloud_dms_az_v1.az_1.id]
+  engine_version    = "2.7"
+  storage_space     = 300
+  broker_num        = 1
+
+  ssl_enable       = true
+  access_user      = "user"
+  password         = var.access_password
+  maintain_begin   = "02:00"
+  maintain_end     = "06:00"
+  retention_policy = "time_base"
+
+  enable_publicip = true
+  publicip_id     = [opentelekomcloud_networking_floatingip_v2.fip_1.id]
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -65,8 +113,8 @@ The following arguments are supported:
 * `description` - (Optional, String) Specifies the description of the DMS Kafka instance. It is a character string
   containing not more than 1,024 characters.
 
-* `flavor_id` - (Optional, String) Specifies the Kafka [flavor ID](https://docs.otc.t-systems.com/distributed-message-service/api-ref/apis_v2_recommended/other_apis/querying_product_specifications_list.html#listengineproducts,
-  e.g. **c6.2u4g.cluster**. This parameter and `product_id` are alternative.
+* `flavor_id` - (Required, String, ForceNew) Specifies the Kafka [flavor ID](https://docs.otc.t-systems.com/distributed-message-service/api-ref/apis_v2_recommended/other_apis/querying_product_specifications_list.html#listengineproducts,
+  e.g. **c6.2u4g.cluster**.
 
 * `engine_version` - (Required, String, ForceNew) Specifies the version of the Kafka engine,
   such as 1.1.0, 2.3.0, 2.7 or other supported versions. Changing this creates a new instance resource.
