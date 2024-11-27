@@ -1,0 +1,3 @@
+fixes:
+  - |
+    **[VPC]** Update/Rename doc to be consistent for ``resource/opentelekomcloud_vpc_peering_connection_v2`` (`#2749 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2749>`_)
