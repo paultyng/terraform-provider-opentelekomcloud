@@ -40,7 +40,7 @@ The following arguments are supported:
 
 ## Attributes Reference
 
-All of the argument attributes are also exported as result attributes:
+All the argument attributes are also exported as result attributes:
 
 * `id` - The VPC peering connection ID.
 
