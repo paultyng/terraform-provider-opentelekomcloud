@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    **[IMS]** New ``resource/opentelekomcloud_ims_image_share_accept_v1`` (`#2746 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2746>`_)
