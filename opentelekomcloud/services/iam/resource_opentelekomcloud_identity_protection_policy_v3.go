@@ -19,7 +19,7 @@ func ResourceIdentityProtectionPolicyV3() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceIdentityProtectionPolicyV3Create,
 		ReadContext:   resourceIdentityProtectionPolicyV3Read,
-		UpdateContext: resourceIdentityProtectionPolicyV3Update,
+		UpdateContext: resourceIdentityProtectionPolicyV3Create,
 		DeleteContext: resourceIdentityProtectionPolicyV3Delete,
 
 		Importer: &schema.ResourceImporter{
@@ -31,6 +31,44 @@ func ResourceIdentityProtectionPolicyV3() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
+			},
+			"verification_mobile": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"verification_email": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"self_management": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"access_key": {
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
+						"password": {
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
+						"mobile": {
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
+						"email": {
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
+					},
+				},
+			},
+			"self_verification": {
+				Type:     schema.TypeBool,
+				Computed: true,
 			},
 		},
 	}
@@ -53,13 +91,36 @@ func resourceIdentityProtectionPolicyV3Create(ctx context.Context, d *schema.Res
 	enable := d.Get("enable_operation_protection_policy").(bool)
 	opPolicyOpts := security.UpdateProtectionPolicyOpts{
 		OperationProtection: pointerto.Bool(enable),
+		AllowUser:           buildSelfManagement(d),
 	}
+
+	// verification_mobile and verification_mobile are valid when the protection is enabled
+	if enable {
+		var adminCheck string
+		if v, ok := d.GetOk("verification_mobile"); ok {
+			adminCheck = "on"
+			opPolicyOpts.Scene = "mobile"
+			opPolicyOpts.Mobile = v.(string)
+		} else if v, ok := d.GetOk("verification_email"); ok {
+			adminCheck = "on"
+			opPolicyOpts.Scene = "email"
+			opPolicyOpts.Email = v.(string)
+		} else {
+			// self verification
+			adminCheck = "off"
+		}
+		opPolicyOpts.AdminCheck = adminCheck
+	}
+
 	_, err = security.UpdateOperationProtectionPolicy(client, domainID, opPolicyOpts)
 	if err != nil {
 		return diag.Errorf("error updating the IAM operation protection policy: %s", err)
 	}
 
-	d.SetId(domainID)
+	// set the ID only when creating
+	if d.IsNewResource() {
+		d.SetId(domainID)
+	}
 
 	clientCtx := common.CtxWithClient(ctx, client, keyClientV3)
 	return resourceIdentityProtectionPolicyV3Read(clientCtx, d, meta)
@@ -83,6 +144,10 @@ func resourceIdentityProtectionPolicyV3Read(ctx context.Context, d *schema.Resou
 
 	mErr := multierror.Append(nil,
 		d.Set("enable_operation_protection_policy", opPolicy.OperationProtection),
+		d.Set("verification_email", opPolicy.Email),
+		d.Set("verification_mobile", opPolicy.Mobile),
+		d.Set("self_verification", opPolicy.AdminCheck != "on"),
+		d.Set("self_management", flattenSelfManagement(opPolicy.AllowUser)),
 	)
 
 	if err = mErr.ErrorOrNil(); err != nil {
@@ -91,27 +156,15 @@ func resourceIdentityProtectionPolicyV3Read(ctx context.Context, d *schema.Resou
 	return nil
 }
 
-func resourceIdentityProtectionPolicyV3Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	config := meta.(*cfg.Config)
-	client, err := common.ClientFromCtx(ctx, keyClientV3, func() (*golangsdk.ServiceClient, error) {
-		return config.IdentityV30Client()
-	})
-	if err != nil {
-		return fmterr.Errorf(clientCreationFail, err)
+func flattenSelfManagement(resp *security.AllowUser) []map[string]interface{} {
+	return []map[string]interface{}{
+		{
+			"access_key": resp.ManageAccessKey,
+			"password":   resp.ManagePassword,
+			"mobile":     resp.ManageMobile,
+			"email":      resp.ManageEmail,
+		},
 	}
-
-	if d.HasChange("enable_operation_protection_policy") {
-		passPolicyOpts := security.UpdateProtectionPolicyOpts{
-			OperationProtection: pointerto.Bool(d.Get("enable_operation_protection_policy").(bool)),
-		}
-		_, err = security.UpdateOperationProtectionPolicy(client, d.Id(), passPolicyOpts)
-		if err != nil {
-			return diag.Errorf("error updating the IAM operation protection policy: %s", err)
-		}
-	}
-
-	clientCtx := common.CtxWithClient(ctx, client, keyClientV3)
-	return resourceIdentityProtectionPolicyV3Read(clientCtx, d, meta)
 }
 
 func resourceIdentityProtectionPolicyV3Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -131,4 +184,33 @@ func resourceIdentityProtectionPolicyV3Delete(ctx context.Context, d *schema.Res
 	}
 
 	return nil
+}
+
+func buildSelfManagement(d *schema.ResourceData) *security.AllowUser {
+	raw := d.Get("self_management").([]interface{})
+	if len(raw) == 0 {
+		// if not specified, keep the previous settings.
+		return nil
+	}
+
+	item, ok := raw[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	allowed := security.AllowUser{}
+	if v, ok := item["access_key"]; ok {
+		allowed.ManageAccessKey = pointerto.Bool(v.(bool))
+	}
+	if v, ok := item["password"]; ok {
+		allowed.ManagePassword = pointerto.Bool(v.(bool))
+	}
+	if v, ok := item["mobile"]; ok {
+		allowed.ManageMobile = pointerto.Bool(v.(bool))
+	}
+	if v, ok := item["email"]; ok {
+		allowed.ManageEmail = pointerto.Bool(v.(bool))
+	}
+
+	return &allowed
 }

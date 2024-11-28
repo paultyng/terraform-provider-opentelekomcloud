@@ -27,6 +27,10 @@ func TestAccIdentityV3Protection_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIdentityV3ProtectionPolicyExists(resourceProtectionPolicyName),
 					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "enable_operation_protection_policy", "true"),
+					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.access_key", "false"),
+					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.password", "false"),
+					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.email", "false"),
+					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.mobile", "false"),
 				),
 			},
 			{
@@ -34,6 +38,10 @@ func TestAccIdentityV3Protection_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIdentityV3ProtectionPolicyExists(resourceProtectionPolicyName),
 					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "enable_operation_protection_policy", "false"),
+					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.access_key", "true"),
+					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.password", "true"),
+					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.email", "true"),
+					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.mobile", "true"),
 				),
 			},
 			{
@@ -91,11 +99,23 @@ func testAccCheckIdentityV3ProtectionPolicyExists(n string) resource.TestCheckFu
 const testAccIdentityV3ProtectionPolicyBasic = `
 resource "opentelekomcloud_identity_protection_policy_v3" "pol_1" {
   enable_operation_protection_policy = true
+  self_management {
+    access_key = false
+    password   = false
+    email      = false
+    mobile     = false
+  }
 }
 `
 
 const testAccIdentityV3ProtectionPolicyUpdate = `
 resource "opentelekomcloud_identity_protection_policy_v3" "pol_1" {
   enable_operation_protection_policy = false
+  self_management {
+    access_key = true
+    password   = true
+    email      = true
+    mobile     = true
+  }
 }
 `
