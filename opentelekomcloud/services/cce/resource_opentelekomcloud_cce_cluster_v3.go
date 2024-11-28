@@ -448,7 +448,7 @@ func resourceCCEClusterV3Create(ctx context.Context, d *schema.ResourceData, met
 		createOpts.Spec.EniNetwork = &eniNetwork
 	}
 
-	create, err := clusters.Create(client, createOpts).Extract()
+	create, err := clusters.Create(client, createOpts)
 
 	if err != nil {
 		if isAuthRequired(err) {
@@ -498,7 +498,7 @@ func resourceCCEClusterV3Read(ctx context.Context, d *schema.ResourceData, meta 
 		return fmterr.Errorf(cceClientError, err)
 	}
 
-	cluster, err := clusters.Get(client, d.Id()).Extract()
+	cluster, err := clusters.Get(client, d.Id())
 	if err != nil {
 		if _, ok := err.(golangsdk.ErrDefault404); ok {
 			d.SetId("")
@@ -546,7 +546,7 @@ func resourceCCEClusterV3Read(ctx context.Context, d *schema.ResourceData, meta 
 		return fmterr.Errorf("error setting cce cluster fields: %w", err)
 	}
 
-	cert, err := clusters.GetCert(client, d.Id()).Extract()
+	cert, err := clusters.GetCert(client, d.Id())
 	if err != nil {
 		return fmterr.Errorf("error retrieving opentelekomcloud CCE cluster cert: %w", err)
 	}
@@ -652,7 +652,7 @@ func resourceCCEClusterV3Update(ctx context.Context, d *schema.ResourceData, met
 
 	if d.HasChange("description") {
 		updateOpts.Spec.Description = d.Get("description").(string)
-		_, err = clusters.Update(client, d.Id(), updateOpts).Extract()
+		_, err = clusters.Update(client, d.Id(), updateOpts)
 		if err != nil {
 			return fmterr.Errorf("error updating opentelekomcloud CCE: %w", err)
 		}
@@ -676,7 +676,7 @@ func resourceCCEClusterV3Update(ctx context.Context, d *schema.ResourceData, met
 			updateIpOpts := clusters.UpdateIpOpts{
 				Action: "unbind",
 			}
-			err = clusters.UpdateMasterIp(client, d.Id(), updateIpOpts).ExtractErr()
+			err = clusters.UpdateMasterIp(client, d.Id(), updateIpOpts)
 			if err != nil {
 				return fmterr.Errorf("error unbinding EIP to opentelekomcloud CCE: %w", err)
 			}
@@ -687,7 +687,7 @@ func resourceCCEClusterV3Update(ctx context.Context, d *schema.ResourceData, met
 				ElasticIp: newEipStr,
 			}
 			updateIpOpts.Spec.ID = fipId
-			err = clusters.UpdateMasterIp(client, d.Id(), updateIpOpts).ExtractErr()
+			err = clusters.UpdateMasterIp(client, d.Id(), updateIpOpts)
 			if err != nil {
 				return fmterr.Errorf("error binding EIP to opentelekomcloud CCE: %w", err)
 			}
@@ -707,7 +707,7 @@ func resourceCCEClusterV3Delete(ctx context.Context, d *schema.ResourceData, met
 		return fmterr.Errorf(cceClientError, err)
 	}
 
-	deleteOpts := clusters.DeleteOpts{}
+	deleteOpts := clusters.DeleteQueryParams{}
 	var deleteAll bool
 	if v, ok := d.GetOk("delete_all_storage"); ok && v.(string) != "false" {
 		deleteOpt := d.Get("delete_all_storage").(string)
@@ -733,7 +733,7 @@ func resourceCCEClusterV3Delete(ctx context.Context, d *schema.ResourceData, met
 		deleteOpts.DeleteSfs = d.Get("delete_sfs").(string)
 	}
 
-	err = clusters.DeleteWithOpts(client, d.Id(), deleteOpts)
+	err = clusters.Delete(client, d.Id(), deleteOpts)
 	if err != nil {
 		return fmterr.Errorf("error deleting opentelekomcloud CCE Cluster: %w", err)
 	}
@@ -758,7 +758,7 @@ func resourceCCEClusterV3Delete(ctx context.Context, d *schema.ResourceData, met
 
 func WaitForCCEClusterActive(cceClient *golangsdk.ServiceClient, clusterId string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		n, err := clusters.Get(cceClient, clusterId).Extract()
+		n, err := clusters.Get(cceClient, clusterId)
 		if err != nil {
 			return nil, "", fmt.Errorf("error waiting for CCE cluster to become active: %w", err)
 		}
@@ -771,7 +771,7 @@ func WaitForCCEClusterDelete(client *golangsdk.ServiceClient, clusterId string) 
 	return func() (interface{}, string, error) {
 		log.Printf("[DEBUG] Attempting to delete  CCE cluster %s.\n", clusterId)
 
-		r, err := clusters.Get(client, clusterId).Extract()
+		r, err := clusters.Get(client, clusterId)
 
 		if err != nil {
 			if _, ok := err.(golangsdk.ErrDefault404); ok {
