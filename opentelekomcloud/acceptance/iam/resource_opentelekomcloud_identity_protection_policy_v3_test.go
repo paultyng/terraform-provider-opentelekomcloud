@@ -13,19 +13,33 @@ import (
 
 const resourceProtectionPolicyName = "opentelekomcloud_identity_protection_policy_v3.pol_1"
 
+func getIAMProtectionFunc(conf *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	c, err := conf.IdentityV30Client()
+	if err != nil {
+		return nil, fmt.Errorf("error creating OpenTelekomCloud APIG v2 client: %s", err)
+	}
+
+	return security.GetOperationProtectionPolicy(c, state.Primary.ID)
+}
+
 func TestAccIdentityV3Protection_basic(t *testing.T) {
+	var policy security.ProtectionPolicy
+	rc := common.InitResourceCheck(
+		resourceProtectionPolicyName,
+		&policy,
+		getIAMProtectionFunc,
+	)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			common.TestAccPreCheck(t)
 			common.TestAccPreCheckAdminOnly(t)
 		},
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckIdentityV3ProtectionPolicyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccIdentityV3ProtectionPolicyBasic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIdentityV3ProtectionPolicyExists(resourceProtectionPolicyName),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "enable_operation_protection_policy", "true"),
 					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.access_key", "false"),
 					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.password", "false"),
@@ -36,7 +50,7 @@ func TestAccIdentityV3Protection_basic(t *testing.T) {
 			{
 				Config: testAccIdentityV3ProtectionPolicyUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIdentityV3ProtectionPolicyExists(resourceProtectionPolicyName),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "enable_operation_protection_policy", "false"),
 					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.access_key", "true"),
 					resource.TestCheckResourceAttr(resourceProtectionPolicyName, "self_management.0.password", "true"),
@@ -51,49 +65,6 @@ func TestAccIdentityV3Protection_basic(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckIdentityV3ProtectionPolicyDestroy(s *terraform.State) error {
-	config := common.TestAccProvider.Meta().(*cfg.Config)
-	client, err := config.IdentityV30Client()
-	if err != nil {
-		return fmt.Errorf("error creating OpenTelekomcloud IdentityV3 client: %w", err)
-	}
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "opentelekomcloud_identity_protection_policy_v3" {
-			continue
-		}
-
-		_, err := security.GetOperationProtectionPolicy(client, rs.Primary.ID)
-		if err != nil {
-			return fmt.Errorf("error fetching the IAM protection policy")
-		}
-	}
-
-	return nil
-}
-
-func testAccCheckIdentityV3ProtectionPolicyExists(n string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no ID is set")
-		}
-
-		config := common.TestAccProvider.Meta().(*cfg.Config)
-		client, err := config.IdentityV30Client()
-		if err != nil {
-			return fmt.Errorf("error creating OpenTelekomcloud IdentityV3 client: %w", err)
-		}
-
-		_, err = security.GetOperationProtectionPolicy(client, rs.Primary.ID)
-		return err
-	}
 }
 
 const testAccIdentityV3ProtectionPolicyBasic = `
