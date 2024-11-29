@@ -1,0 +1,4 @@
+---
+enhancements:
+  - |
+    **[IAM]** Add ``self_management`` and other verification arguments to ``resource/opentelekomcloud_identity_protection_policy_v3`` (`#2752 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2752>`_)
