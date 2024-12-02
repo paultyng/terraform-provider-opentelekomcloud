@@ -27,6 +27,7 @@ var (
 	OS_DC_HOSTING_ID     = os.Getenv("OS_DC_HOSTING_ID")
 	OS_DDM_ID            = os.Getenv("OS_DDM_ID")
 	OS_RDS_ID            = os.Getenv("OS_RDS_ID")
+	OS_APIGW_GATEWAY_ID  = os.Getenv("OS_APIGW_GATEWAY_ID")
 )
 
 func flavorID() string {

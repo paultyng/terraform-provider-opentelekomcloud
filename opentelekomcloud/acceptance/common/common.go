@@ -132,6 +132,12 @@ func TestAccVBSBackupShareCheck(t *testing.T) {
 	}
 }
 
+func TestAccPreCheckApigw(t *testing.T) {
+	if env.OS_APIGW_GATEWAY_ID == "" {
+		t.Skip("Before running APIGW acceptance tests, please ensure the env 'OS_APIGW_GATEWAY_ID' has been configured")
+	}
+}
+
 func TestAccPreCheckServiceAvailability(t *testing.T, service string, regions []string) diag.Diagnostics {
 	t.Logf("Service: %s, Region %s", service, env.OS_REGION_NAME)
 	config := TestAccProvider.Meta().(*cfg.Config)

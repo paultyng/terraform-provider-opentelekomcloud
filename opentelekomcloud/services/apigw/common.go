@@ -22,6 +22,9 @@ type (
 	NetworkType     string
 
 	SecretAction string
+	RouteConfig  struct {
+		UserRoutes []interface{} `json:"user_routes"`
+	}
 )
 
 const (
