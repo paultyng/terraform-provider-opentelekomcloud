@@ -18,21 +18,35 @@ import (
 
 const resourceClusterName = "opentelekomcloud_cce_cluster_v3.cluster_1"
 
+func getCceClusterResourceFunc(cfg *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	client, err := cfg.CceV3Client(env.OS_REGION_NAME)
+	if err != nil {
+		return nil, fmt.Errorf("error creating CCE v3 Client: %s", err)
+	}
+	return clusters.Get(client, state.Primary.ID)
+}
+
 func TestAccCCEClusterV3_basic(t *testing.T) {
 	var cluster clusters.Clusters
+	rc := common.InitResourceCheck(
+		resourceClusterName,
+		&cluster,
+		getCceClusterResourceFunc,
+	)
 	clusterName := randClusterName()
 	t.Parallel()
+
 	quotas.BookOne(t, quotas.CCEClusterQuota)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEClusterV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEClusterV3Basic(clusterName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCEClusterV3Exists(resourceClusterName, &cluster),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceClusterName, "name", clusterName),
 					resource.TestCheckResourceAttr(resourceClusterName, "status", "Available"),
 					resource.TestCheckResourceAttr(resourceClusterName, "cluster_type", "VirtualMachine"),
@@ -64,19 +78,25 @@ func TestAccCCEClusterV3_basic(t *testing.T) {
 
 func TestAccCCEClusterV3_turbo_basic(t *testing.T) {
 	var cluster clusters.Clusters
+	rc := common.InitResourceCheck(
+		resourceClusterName,
+		&cluster,
+		getCceClusterResourceFunc,
+	)
 	clusterName := randClusterName()
 	t.Parallel()
+
 	quotas.BookOne(t, quotas.CCEClusterQuota)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEClusterV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEClusterTurboV3Basic(clusterName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCEClusterV3Exists(resourceClusterName, &cluster),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceClusterName, "name", clusterName),
 					resource.TestCheckResourceAttr(resourceClusterName, "status", "Available"),
 					resource.TestCheckResourceAttr(resourceClusterName, "cluster_type", "VirtualMachine"),
@@ -94,6 +114,12 @@ func TestAccCCEClusterV3_turbo_basic(t *testing.T) {
 }
 
 func TestAccCCEClusterV3_importBasic(t *testing.T) {
+	var cluster clusters.Clusters
+	rc := common.InitResourceCheck(
+		resourceClusterName,
+		&cluster,
+		getCceClusterResourceFunc,
+	)
 	clusterName := randClusterName()
 	t.Parallel()
 	quotas.BookOne(t, quotas.CCEClusterQuota)
@@ -101,7 +127,7 @@ func TestAccCCEClusterV3_importBasic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEClusterV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEClusterV3BasicSG(clusterName),
@@ -121,13 +147,20 @@ func TestAccCCEClusterV3_importBasic(t *testing.T) {
 }
 
 func TestAccCCEClusterV3_invalidNetwork(t *testing.T) {
+	var cluster clusters.Clusters
+	rc := common.InitResourceCheck(
+		resourceClusterName,
+		&cluster,
+		getCceClusterResourceFunc,
+	)
 	clusterName := randClusterName()
 	t.Parallel()
+
 	quotas.BookOne(t, quotas.CCEClusterQuota)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEClusterV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCCEClusterV3InvalidSubnet(clusterName),
@@ -149,13 +182,20 @@ func TestAccCCEClusterV3_invalidNetwork(t *testing.T) {
 }
 
 func TestAccCCEClusterV3_proxyAuth(t *testing.T) {
+	var cluster clusters.Clusters
+	rc := common.InitResourceCheck(
+		resourceClusterName,
+		&cluster,
+		getCceClusterResourceFunc,
+	)
 	clusterName := randClusterName()
 	t.Parallel()
+
 	quotas.BookOne(t, quotas.CCEClusterQuota)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEClusterV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEClusterV3AuthProxy(clusterName),
@@ -167,6 +207,11 @@ func TestAccCCEClusterV3_proxyAuth(t *testing.T) {
 
 func TestAccCCEClusterV3_timeout(t *testing.T) {
 	var cluster clusters.Clusters
+	rc := common.InitResourceCheck(
+		resourceClusterName,
+		&cluster,
+		getCceClusterResourceFunc,
+	)
 	clusterName := randClusterName()
 	t.Parallel()
 	quotas.BookOne(t, quotas.CCEClusterQuota)
@@ -174,12 +219,12 @@ func TestAccCCEClusterV3_timeout(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEClusterV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEClusterV3Timeout(clusterName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCEClusterV3Exists(resourceClusterName, &cluster),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceClusterName, "authentication_mode", "rbac"),
 				),
 			},
@@ -189,19 +234,23 @@ func TestAccCCEClusterV3_timeout(t *testing.T) {
 
 func TestAccCCEClusterV3NoAddons(t *testing.T) {
 	var cluster clusters.Clusters
-
+	rc := common.InitResourceCheck(
+		resourceClusterName,
+		&cluster,
+		getCceClusterResourceFunc,
+	)
 	t.Parallel()
 	quotas.BookOne(t, quotas.CCEClusterQuota)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEClusterV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEClusterV3NoAddons(randClusterName()),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCEClusterV3Exists(resourceClusterName, &cluster),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceClusterName, "installed_addons.#", "0"),
 				),
 			},
@@ -211,19 +260,24 @@ func TestAccCCEClusterV3NoAddons(t *testing.T) {
 
 func TestAccCCEClusterV3NoUserClusterDataSet(t *testing.T) {
 	var cluster clusters.Clusters
-
+	rc := common.InitResourceCheck(
+		resourceClusterName,
+		&cluster,
+		getCceClusterResourceFunc,
+	)
 	t.Parallel()
+
 	quotas.BookOne(t, quotas.CCEClusterQuota)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEClusterV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEClusterV3NoUserClusterData(randClusterName()),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCEClusterV3Exists(resourceClusterName, &cluster),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceClusterName, "certificate_clusters.#", "0"),
 					resource.TestCheckResourceAttr(resourceClusterName, "certificate_users.#", "0"),
 				),
@@ -232,61 +286,13 @@ func TestAccCCEClusterV3NoUserClusterDataSet(t *testing.T) {
 	})
 }
 
-func testAccCheckCCEClusterV3Destroy(s *terraform.State) error {
-	config := common.TestAccProvider.Meta().(*cfg.Config)
-	client, err := config.CceV3Client(env.OS_REGION_NAME)
-	if err != nil {
-		return fmt.Errorf("error creating opentelekomcloud CCE client: %s", err)
-	}
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "opentelekomcloud_cce_cluster_v3" {
-			continue
-		}
-
-		_, err := clusters.Get(client, rs.Primary.ID).Extract()
-		if err == nil {
-			return fmt.Errorf("cluster still exists")
-		}
-	}
-
-	return nil
-}
-
-func testAccCheckCCEClusterV3Exists(n string, cluster *clusters.Clusters) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no ID is set")
-		}
-
-		config := common.TestAccProvider.Meta().(*cfg.Config)
-		client, err := config.CceV3Client(env.OS_REGION_NAME)
-		if err != nil {
-			return fmt.Errorf("error creating OpenTelekomCloud CCE client: %s", err)
-		}
-
-		found, err := clusters.Get(client, rs.Primary.ID).Extract()
-		if err != nil {
-			return err
-		}
-
-		if found.Metadata.Id != rs.Primary.ID {
-			return fmt.Errorf("cluster not found")
-		}
-
-		*cluster = *found
-
-		return nil
-	}
-}
-
 func TestAccCCEClusterV3_withVersionDiff(t *testing.T) {
 	var cluster clusters.Clusters
+	rc := common.InitResourceCheck(
+		resourceClusterName,
+		&cluster,
+		getCceClusterResourceFunc,
+	)
 	clusterName := randClusterName()
 	t.Parallel()
 	quotas.BookOne(t, quotas.CCEClusterQuota)
@@ -294,12 +300,12 @@ func TestAccCCEClusterV3_withVersionDiff(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEClusterV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEClusterV3WithInvalidVersion(clusterName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCEClusterV3Exists(resourceClusterName, &cluster),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceClusterName, "name", clusterName),
 				),
 			},

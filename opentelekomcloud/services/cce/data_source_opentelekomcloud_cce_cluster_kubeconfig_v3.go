@@ -69,7 +69,7 @@ func dataSourceCCEClusterKubeConfigV3Read(_ context.Context, d *schema.ResourceD
 		Duration: duration,
 	}
 
-	kubeconfig, err := clusters.GetCertWithExpiration(client, clusterID, expiryOpts).ExtractMap()
+	kubeconfig, err := clusters.GetCertWithExpiration(client, clusterID, expiryOpts)
 	if err != nil {
 		return fmterr.Errorf("unable to retrieve cluster kubeconfig: %w", err)
 	}

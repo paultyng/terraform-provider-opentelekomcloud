@@ -83,7 +83,7 @@ func deleteSharedCluster(t *testing.T) {
 		client, err := config.CceV3Client(env.OS_REGION_NAME)
 		th.AssertNoErr(t, err)
 
-		th.AssertNoErr(t, clusters.Delete(client, sharedClusterID).ExtractErr())
+		th.AssertNoErr(t, clusters.Delete(client, sharedClusterID, clusters.DeleteQueryParams{}))
 
 		stateConf := &resource.StateChangeConf{
 			Pending:    []string{"Deleting", "Available", "Unavailable"},
@@ -137,7 +137,7 @@ func CreateSharedCluster(t *testing.T, client *golangsdk.ServiceClient, subnet *
 				SubnetId: subnet.ID,
 			},
 		},
-	}).Extract()
+	})
 	th.AssertNoErr(t, err)
 	sharedClusterID = job.Metadata.Id
 
