@@ -130,8 +130,8 @@ resource "opentelekomcloud_obs_bucket_acl" "test" {
   }
 
   account_permission {
-    access_to_acl    = ["READ_ACP"]
-    account_id       = "1000010023"
+    access_to_acl = ["READ_ACP"]
+    account_id    = "1000010023"
   }
 
   public_permission {
