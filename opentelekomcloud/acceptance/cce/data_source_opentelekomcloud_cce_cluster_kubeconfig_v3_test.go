@@ -3,6 +3,7 @@ package acceptance
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -108,7 +109,15 @@ resource "opentelekomcloud_cce_cluster_v3" "cluster_1" {
 
 data "opentelekomcloud_cce_cluster_kubeconfig_v3" "this" {
   cluster_id  = opentelekomcloud_cce_cluster_v3.cluster_1.id
-  expiry_date = "2024-02-01"
+  expiry_date = "%s"
 }
-`, common.DataSourceSubnet, cceName)
+`, common.DataSourceSubnet, cceName, GetDatePlusTwo())
+}
+
+// GetDatePlusTwo returns the date for today + 2 days in the YYYY-MM-DD format.
+func GetDatePlusTwo() string {
+	today := time.Now()
+	futureDate := today.AddDate(0, 0, 2)
+	formattedDate := futureDate.Format("2006-01-02")
+	return formattedDate
 }

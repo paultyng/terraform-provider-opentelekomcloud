@@ -24,9 +24,26 @@ cloud to use this resource. Please refer to [User Management Model](https://docs
 
 ## Example Usage
 
+### Self-Verification
+
 ```hcl
 resource "opentelekomcloud_identity_protection_policy_v3" "policy_1" {
-  enable_operation_protection_policy = false
+  enable_operation_protection_policy = true
+  self_management {
+    access_key = true
+    password   = true
+    email      = false
+    mobile     = false
+  }
+}
+```
+
+### Verification by another person
+
+```hcl
+resource "opentelekomcloud_identity_protection_policy_v3" "policy_2" {
+  enable_operation_protection_policy = true
+  verification_email                 = "example@email.com"
 }
 ```
 
@@ -37,11 +54,34 @@ The following arguments are supported:
 * `enable_operation_protection_policy` - (Optional, Bool) Indicates whether operation protection has been enabled.
   The value can be `true` or `false`. Default: `false`
 
+* `verification_email` - (Optional, String) Specifies the email address used for verification. An example value is `example@email.com`.
+
+* `verification_mobile` - (Optional, String) Specifies the mobile number used for verification.
+
+-> If `protection_enabled` is set to true and neither `verification_email` nor `verification_mobile` is specified, IAM users
+perform verification by themselves when performing a critical operation.
+
+* `self_management` - (Optional, List) Specifies the attributes IAM users can modify.
+  The [object](#self_management_policy) structure is documented below.
+
+<a name="self_management_policy"></a>
+The `self_management` block supports:
+
+* `access_key` - (Optional, Bool) Specifies whether to allow IAM users to manage access keys by themselves.
+
+* `password` - (Optional, Bool) Specifies whether to allow IAM users to change their passwords.
+
+* `email` - (Optional, Bool) Specifies whether to allow IAM users to change their email addresses.
+
+* `mobile` - (Optional, Bool) Specifies whether to allow IAM users to change their mobile numbers.
+
 ## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - The ID of account protection policy, which is the same as the domain ID.
+
+* `self_verification` - Indicates whether the IAM users perform verification by themselves.
 
 ## Import
 

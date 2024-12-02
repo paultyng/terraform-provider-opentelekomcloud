@@ -36,6 +36,7 @@ func ResourceDmsInstancesV2() *schema.Resource {
 			Update: schema.DefaultTimeout(50 * time.Minute),
 			Delete: schema.DefaultTimeout(15 * time.Minute),
 		},
+		DeprecationMessage: "Please use `opentelekomcloud_dms_dedicated_instance_v2` resource instead",
 
 		Schema: map[string]*schema.Schema{
 			"name": {

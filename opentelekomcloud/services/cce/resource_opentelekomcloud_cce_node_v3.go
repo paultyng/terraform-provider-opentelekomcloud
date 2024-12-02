@@ -1146,7 +1146,7 @@ func waitForCceNodeDelete(cceClient *golangsdk.ServiceClient, clusterId, nodeId 
 func waitForClusterAvailable(cceClient *golangsdk.ServiceClient, clusterId string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		log.Printf("[INFO] Waiting for OpenTelekomCloud Cluster to be available %s.\n", clusterId)
-		n, err := clusters.Get(cceClient, clusterId).Extract()
+		n, err := clusters.Get(cceClient, clusterId)
 
 		if err != nil {
 			return nil, "", err

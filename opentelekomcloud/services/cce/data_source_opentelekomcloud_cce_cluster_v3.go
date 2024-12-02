@@ -203,7 +203,7 @@ func dataSourceCCEClusterV3Read(_ context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 
-	cert, err := clusters.GetCert(cceClient, d.Id()).Extract()
+	cert, err := clusters.GetCert(cceClient, d.Id())
 	if err != nil {
 		return fmterr.Errorf("error retrieving opentelekomcloud CCE cluster cert: %s", err)
 	}

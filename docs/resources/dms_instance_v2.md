@@ -14,6 +14,9 @@ Up-to-date reference of API arguments for DMS instance you can get at
 
 Manages a DMS instance in the OpenTelekomCloud DMS Service (Kafka Premium/Platinum).
 
+~>
+Deprecated, use `opentelekomcloud_dms_dedicated_instance_v2` resource instead
+
 ## Example Usage
 
 ### Automatically detect the correct network

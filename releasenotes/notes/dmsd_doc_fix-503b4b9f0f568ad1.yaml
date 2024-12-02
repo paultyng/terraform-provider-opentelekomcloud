@@ -1,0 +1,6 @@
+---
+other:
+  |
+  **[DMS]** Added deprecation warning for ``resource/opentelekomcloud_dms_instance_v2`` (`#2750 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/issues/2750>`_)
+  |
+  **[DMS]** Documentation fix for ``resource/opentelekomcloud_dms_dedicated_instance_v2`` (`#2750 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/issues/2750>`_)
