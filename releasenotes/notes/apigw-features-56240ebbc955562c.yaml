@@ -1,0 +1,8 @@
+---
+features:
+  |
+  **[APIGW]** Add new ``resource/opentelekomcloud_apigw_gateway_routes_v2`` (`#2755 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2755>`_)
+  |
+  **[APIGW]** Add new ``resource/opentelekomcloud_apigw_gateway_feature_v2`` (`#2755 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2755>`_)
+  |
+  **[APIGW]** Add new ``data-source/opentelekomcloud_apigw_gateway_features_v2`` (`#2755 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2755>`_)
