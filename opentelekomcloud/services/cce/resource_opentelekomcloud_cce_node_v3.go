@@ -599,7 +599,7 @@ func resourceCCENodeV3Create(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	log.Printf("[DEBUG] Create Options: %#v", createOpts)
-	node, err := nodes.Create(client, clusterID, createOpts).Extract()
+	node, err := nodes.Create(client, clusterID, createOpts)
 	switch err.(type) {
 	case golangsdk.ErrDefault403:
 		retryNode, err := recursiveCreate(ctx, client, createOpts, clusterID)
@@ -640,7 +640,7 @@ func resourceCCENodeV3Create(ctx context.Context, d *schema.ResourceData, meta i
 
 // getNodeIDFromJob wait until job starts (status Running) and returns Node ID
 func getNodeIDFromJob(ctx context.Context, client *golangsdk.ServiceClient, jobID string, timeout time.Duration) (string, error) {
-	job, err := nodes.GetJobDetails(client, jobID).ExtractJob()
+	job, err := nodes.GetJobDetails(client, jobID)
 	if err != nil {
 		return "", fmt.Errorf("error fetching OpenTelekomCloud Job Details: %s", err)
 	}
@@ -650,7 +650,7 @@ func getNodeIDFromJob(ctx context.Context, client *golangsdk.ServiceClient, jobI
 		Pending: []string{"Initializing"},
 		Target:  []string{"Running"},
 		Refresh: func() (interface{}, string, error) {
-			subJob, err := nodes.GetJobDetails(client, jobResourceId).ExtractJob()
+			subJob, err := nodes.GetJobDetails(client, jobResourceId)
 			if err != nil {
 				return nil, "ERROR", fmt.Errorf("error fetching OpenTelekomCloud Job Details: %s", err)
 			}
@@ -691,7 +691,7 @@ func resourceCCENodeV3Read(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	clusterID := d.Get("cluster_id").(string)
-	node, err := nodes.Get(client, clusterID, d.Id()).Extract()
+	node, err := nodes.Get(client, clusterID, d.Id())
 	if err != nil {
 		if _, ok := err.(golangsdk.ErrDefault404); ok {
 			d.SetId("")
@@ -856,7 +856,7 @@ func resourceCCENodeV3Update(ctx context.Context, d *schema.ResourceData, meta i
 		updateOpts.Metadata.Name = d.Get("name").(string)
 
 		clusterID := d.Get("cluster_id").(string)
-		_, err = nodes.Update(client, clusterID, d.Id(), updateOpts).Extract()
+		_, err = nodes.Update(client, clusterID, d.Id(), updateOpts)
 		if err != nil {
 			return fmterr.Errorf("error updating OpenTelekomCloud CCE node: %s", err)
 		}
@@ -941,7 +941,7 @@ func resourceCCENodeV3Delete(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	clusterID := d.Get("cluster_id").(string)
-	if err := nodes.Delete(client, clusterID, d.Id()).ExtractErr(); err != nil {
+	if err := nodes.Delete(client, clusterID, d.Id()); err != nil {
 		return fmterr.Errorf("error deleting OpenTelekomCloud CCE Cluster: %w", err)
 	}
 	stateConf := &resource.StateChangeConf{
@@ -1115,7 +1115,7 @@ func checkCCENodeV3PublicIpParams(d *schema.ResourceData) {
 
 func waitForCceNodeActive(cceClient *golangsdk.ServiceClient, clusterId, nodeId string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		n, err := nodes.Get(cceClient, clusterId, nodeId).Extract()
+		n, err := nodes.Get(cceClient, clusterId, nodeId)
 		if err != nil {
 			return nil, "", err
 		}
@@ -1128,7 +1128,7 @@ func waitForCceNodeDelete(cceClient *golangsdk.ServiceClient, clusterId, nodeId 
 	return func() (interface{}, string, error) {
 		log.Printf("[DEBUG] Attempting to delete OpenTelekomCloud CCE Node %s.\n", nodeId)
 
-		r, err := nodes.Get(cceClient, clusterId, nodeId).Extract()
+		r, err := nodes.Get(cceClient, clusterId, nodeId)
 
 		if err != nil {
 			if _, ok := err.(golangsdk.ErrDefault404); ok {
@@ -1156,7 +1156,7 @@ func waitForClusterAvailable(cceClient *golangsdk.ServiceClient, clusterId strin
 	}
 }
 
-func recursiveCreate(ctx context.Context, client *golangsdk.ServiceClient, opts nodes.CreateOptsBuilder, clusterID string) (*nodes.Nodes, string) {
+func recursiveCreate(ctx context.Context, client *golangsdk.ServiceClient, opts nodes.CreateOpts, clusterID string) (*nodes.Nodes, string) {
 	stateCluster := &resource.StateChangeConf{
 		Target:     []string{"Available"},
 		Refresh:    waitForClusterAvailable(client, clusterID),
@@ -1168,7 +1168,7 @@ func recursiveCreate(ctx context.Context, client *golangsdk.ServiceClient, opts 
 	if stateErr != nil {
 		log.Printf("[INFO] Cluster Unavailable %s.\n", stateErr)
 	}
-	node, err := nodes.Create(client, clusterID, opts).Extract()
+	node, err := nodes.Create(client, clusterID, opts)
 	if err != nil {
 		if _, ok := err.(golangsdk.ErrDefault403); ok {
 			return recursiveCreate(ctx, client, opts, clusterID)

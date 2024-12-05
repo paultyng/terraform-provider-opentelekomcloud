@@ -18,7 +18,6 @@ import (
 
 const (
 	resourceNameNode  = "opentelekomcloud_cce_node_v3.node_1"
-	resourceNameNode2 = "opentelekomcloud_cce_node_v3.node_2"
 	resourceNameNode3 = "opentelekomcloud_cce_node_v3.node_3"
 	resourceNameNode4 = "opentelekomcloud_cce_node_v3.node_4"
 )
@@ -130,7 +129,6 @@ func TestAccCCENodesV3Timeout(t *testing.T) {
 }
 func TestAccCCENodesV3OS(t *testing.T) {
 	var node nodes.Nodes
-	var node2 nodes.Nodes
 	var node3 nodes.Nodes
 	var node4 nodes.Nodes
 
@@ -148,8 +146,6 @@ func TestAccCCENodesV3OS(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
 					resource.TestCheckResourceAttr(resourceNameNode, "os", "EulerOS 2.5"),
-					testAccCheckCCENodeV3Exists(resourceNameNode2, shared.DataSourceClusterName, &node2),
-					resource.TestCheckResourceAttr(resourceNameNode2, "os", "CentOS 7.7"),
 					testAccCheckCCENodeV3Exists(resourceNameNode3, shared.DataSourceClusterName, &node3),
 					resource.TestCheckResourceAttr(resourceNameNode3, "os", "EulerOS 2.9"),
 					testAccCheckCCENodeV3Exists(resourceNameNode4, shared.DataSourceClusterName, &node4),
@@ -428,7 +424,7 @@ func testAccCheckCCENodeV3Destroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := nodes.Get(client, clusterID, rs.Primary.ID).Extract()
+		_, err := nodes.Get(client, clusterID, rs.Primary.ID)
 		if err == nil {
 			return fmt.Errorf("node still exists")
 		}
@@ -461,7 +457,7 @@ func testAccCheckCCENodeV3Exists(n string, cluster string, node *nodes.Nodes) re
 			return fmt.Errorf("error creating OpenTelekomCloud CCE client: %s", err)
 		}
 
-		found, err := nodes.Get(client, c.Primary.ID, rs.Primary.ID).Extract()
+		found, err := nodes.Get(client, c.Primary.ID, rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -499,25 +495,6 @@ resource "opentelekomcloud_cce_node_v3" "node_1" {
   }
 }
 
-resource "opentelekomcloud_cce_node_v3" "node_2" {
-  cluster_id = data.opentelekomcloud_cce_cluster_v3.cluster.id
-  name       = "test-node"
-  flavor_id  = "s2.large.2"
-  os         = "CentOS 7.7"
-
-  availability_zone = "%[2]s"
-  key_pair          = "%[3]s"
-
-  root_volume {
-    size       = 40
-    volumetype = "SATA"
-  }
-
-  data_volumes {
-    size       = 100
-    volumetype = "SATA"
-  }
-}
 
 resource "opentelekomcloud_cce_node_v3" "node_3" {
   cluster_id = data.opentelekomcloud_cce_cluster_v3.cluster.id
