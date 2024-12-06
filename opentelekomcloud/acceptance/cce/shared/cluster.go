@@ -119,27 +119,39 @@ func BookCluster(t *testing.T) {
 
 func CreateSharedCluster(t *testing.T, client *golangsdk.ServiceClient, subnet *subnets.Subnet) string {
 	t.Log("starting creating shared cluster")
-	job, err := clusters.Create(client, clusters.CreateOpts{
+
+	cluster, err := clusters.Create(client, clusters.CreateOpts{
 		Kind:       "Cluster",
 		ApiVersion: "v3",
 		Metadata: clusters.CreateMetaData{
 			Name: sharedClusterName,
 		},
 		Spec: clusters.Spec{
+			Category:    "Turbo",
 			Type:        "VirtualMachine",
 			Flavor:      "cce.s2.small",
 			Description: "Shared cluster for CCE acceptance tests",
-			ContainerNetwork: clusters.ContainerNetworkSpec{
-				Mode: "vpc-router",
-			},
 			HostNetwork: clusters.HostNetworkSpec{
 				VpcId:    subnet.VpcID,
 				SubnetId: subnet.ID,
 			},
+			ContainerNetwork: clusters.ContainerNetworkSpec{
+				Mode: "eni",
+			},
+			EniNetwork: &clusters.EniNetworkSpec{
+				SubnetId: subnet.SubnetID,
+				Cidr:     subnet.CIDR,
+			},
+			Authentication: clusters.AuthenticationSpec{
+				Mode:                "rbac",
+				AuthenticatingProxy: make(map[string]string),
+			},
+			KubernetesSvcIpRange: "10.247.0.0/16",
 		},
 	})
+
 	th.AssertNoErr(t, err)
-	sharedClusterID = job.Metadata.Id
+	sharedClusterID = cluster.Metadata.Id
 
 	stateConf := &resource.StateChangeConf{
 		Pending:    []string{"Creating"},
