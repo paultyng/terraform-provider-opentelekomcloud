@@ -22,25 +22,38 @@ const (
 	resourceNameNode4 = "opentelekomcloud_cce_node_v3.node_4"
 )
 
+func getCceNodeResourceFunc(cfg *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	client, err := cfg.CceV3Client(env.OS_REGION_NAME)
+	if err != nil {
+		return nil, fmt.Errorf("error creating CCE v3 Client: %s", err)
+	}
+	return nodes.Get(client, state.Primary.Attributes["cluster_id"], state.Primary.ID)
+}
+
 func TestAccCCENodesV3Basic(t *testing.T) {
 	var node nodes.Nodes
 
-	t.Parallel()
-	shared.BookCluster(t)
-	quotas.BookMany(t, singleNodeQuotas.X(2))
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
 
-	ip, _ := cidr.Host(shared.SubnetNet, 14)
+	shared.BookCluster(t)
+	t.Parallel()
+
+	ip, _ := cidr.Host(shared.SubnetNet, 200)
 	privateIP := ip.String()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3Basic(privateIP),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceNameNode, "name", "test-node"),
 					resource.TestCheckResourceAttr(resourceNameNode, "flavor_id", "s2.large.2"),
 					resource.TestCheckResourceAttr(resourceNameNode, "os", "EulerOS 2.9"),
