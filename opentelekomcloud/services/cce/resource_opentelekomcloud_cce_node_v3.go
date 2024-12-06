@@ -589,7 +589,7 @@ func resourceCCENodeV3Create(ctx context.Context, d *schema.ResourceData, meta i
 	stateCluster := &resource.StateChangeConf{
 		Target:     []string{"Available"},
 		Refresh:    waitForClusterAvailable(client, clusterID),
-		Timeout:    15 * time.Minute,
+		Timeout:    20 * time.Minute,
 		Delay:      15 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
