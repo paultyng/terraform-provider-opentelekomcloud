@@ -20,28 +20,40 @@ const (
 	resourceNameNode  = "opentelekomcloud_cce_node_v3.node_1"
 	resourceNameNode2 = "opentelekomcloud_cce_node_v3.node_2"
 	resourceNameNode3 = "opentelekomcloud_cce_node_v3.node_3"
-	resourceNameNode4 = "opentelekomcloud_cce_node_v3.node_4"
 )
 
-func TestAccCCENodesV3Basic(t *testing.T) {
+func getCceNodeResourceFunc(cfg *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	client, err := cfg.CceV3Client(env.OS_REGION_NAME)
+	if err != nil {
+		return nil, fmt.Errorf("error creating CCE v3 Client: %s", err)
+	}
+	return nodes.Get(client, state.Primary.Attributes["cluster_id"], state.Primary.ID)
+}
+
+func TestAccResourceCCENodesV3Basic(t *testing.T) {
 	var node nodes.Nodes
 
-	t.Parallel()
-	shared.BookCluster(t)
-	quotas.BookMany(t, singleNodeQuotas.X(2))
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
 
-	ip, _ := cidr.Host(shared.SubnetNet, 14)
+	shared.BookCluster(t)
+	t.Parallel()
+
+	ip, _ := cidr.Host(shared.SubnetNet, 200)
 	privateIP := ip.String()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3Basic(privateIP),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceNameNode, "name", "test-node"),
 					resource.TestCheckResourceAttr(resourceNameNode, "flavor_id", "s2.large.2"),
 					resource.TestCheckResourceAttr(resourceNameNode, "os", "EulerOS 2.9"),
@@ -60,25 +72,30 @@ func TestAccCCENodesV3Basic(t *testing.T) {
 	})
 }
 
-func TestAccCCENodesV3Agency(t *testing.T) {
+func TestAccResourceCCENodesV3Agency(t *testing.T) {
 	var node nodes.Nodes
 
-	t.Parallel()
-	shared.BookCluster(t)
-	quotas.BookMany(t, singleNodeQuotas.X(2))
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
 
-	ip, _ := cidr.Host(shared.SubnetNet, 14)
+	shared.BookCluster(t)
+	t.Parallel()
+
+	ip, _ := cidr.Host(shared.SubnetNet, 200)
 	privateIP := ip.String()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3Agency(privateIP),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceNameNode, "name", "test-node"),
 					resource.TestCheckResourceAttr(resourceNameNode, "flavor_id", "s2.large.2"),
 					resource.TestCheckResourceAttr(resourceNameNode, "os", "EulerOS 2.9"),
@@ -90,7 +107,7 @@ func TestAccCCENodesV3Agency(t *testing.T) {
 	})
 }
 
-func TestAccCCENodesV3Multiple(t *testing.T) {
+func TestAccResourceCCENodesV3Multiple(t *testing.T) {
 	t.Parallel()
 	shared.BookCluster(t)
 	quotas.BookMany(t, singleNodeQuotas.X(2))
@@ -98,7 +115,6 @@ func TestAccCCENodesV3Multiple(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3Multiple,
@@ -107,32 +123,47 @@ func TestAccCCENodesV3Multiple(t *testing.T) {
 	})
 }
 
-func TestAccCCENodesV3Timeout(t *testing.T) {
+func TestAccResourceCCENodesV3Timeout(t *testing.T) {
 	var node nodes.Nodes
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
 
-	t.Parallel()
 	shared.BookCluster(t)
+	t.Parallel()
 	quotas.BookMany(t, singleNodeQuotas)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3Timeout,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 				),
 			},
 		},
 	})
 }
-func TestAccCCENodesV3OS(t *testing.T) {
-	var node nodes.Nodes
+func TestAccResourceCCENodesV3OS(t *testing.T) {
 	var node2 nodes.Nodes
 	var node3 nodes.Nodes
-	var node4 nodes.Nodes
+
+	rc2 := common.InitResourceCheck(
+		resourceNameNode2,
+		&node2,
+		getCceNodeResourceFunc,
+	)
+
+	rc3 := common.InitResourceCheck(
+		resourceNameNode3,
+		&node3,
+		getCceNodeResourceFunc,
+	)
 
 	t.Parallel()
 	shared.BookCluster(t)
@@ -146,25 +177,27 @@ func TestAccCCENodesV3OS(t *testing.T) {
 			{
 				Config: testAccCCENodeV3OS,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
-					resource.TestCheckResourceAttr(resourceNameNode, "os", "EulerOS 2.5"),
-					testAccCheckCCENodeV3Exists(resourceNameNode2, shared.DataSourceClusterName, &node2),
-					resource.TestCheckResourceAttr(resourceNameNode2, "os", "CentOS 7.7"),
-					testAccCheckCCENodeV3Exists(resourceNameNode3, shared.DataSourceClusterName, &node3),
-					resource.TestCheckResourceAttr(resourceNameNode3, "os", "EulerOS 2.9"),
-					testAccCheckCCENodeV3Exists(resourceNameNode4, shared.DataSourceClusterName, &node4),
-					resource.TestCheckResourceAttr(resourceNameNode4, "os", "Ubuntu 22.04"),
+					rc2.CheckResourceExists(),
+					resource.TestCheckResourceAttr(resourceNameNode2, "os", "EulerOS 2.9"),
+					rc3.CheckResourceExists(),
+					resource.TestCheckResourceAttr(resourceNameNode3, "os", "Ubuntu 22.04"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccCCENodesV3BandWidthResize(t *testing.T) {
+func TestAccResourceCCENodesV3BandWidthResize(t *testing.T) {
 	var node nodes.Nodes
 
-	t.Parallel()
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
+
 	shared.BookCluster(t)
+	t.Parallel()
 	qts := quotas.MultipleQuotas{{Q: quotas.FloatingIP, Count: 1}}
 	qts = append(qts, singleNodeQuotas...)
 	quotas.BookMany(t, qts)
@@ -172,12 +205,12 @@ func TestAccCCENodesV3BandWidthResize(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3Ip,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceNameNode, "iptype", "5_bgp"),
 					resource.TestCheckResourceAttr(resourceNameNode, "sharetype", "PER"),
 					resource.TestCheckResourceAttr(resourceNameNode, "bandwidth_charge_mode", "traffic"),
@@ -187,7 +220,7 @@ func TestAccCCENodesV3BandWidthResize(t *testing.T) {
 			{
 				Config: testAccCCENodeV3BandWidthResize,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceNameNode, "bandwidth_size", "10"),
 				),
 			},
@@ -195,11 +228,17 @@ func TestAccCCENodesV3BandWidthResize(t *testing.T) {
 	})
 }
 
-func TestAccCCENodesV3_eipIds(t *testing.T) {
+func TestAccResourceCCENodesV3_eipIds(t *testing.T) {
 	var node nodes.Nodes
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
 
-	t.Parallel()
 	shared.BookCluster(t)
+	t.Parallel()
+
 	qts := []*quotas.ExpectedQuota{{Q: quotas.FloatingIP, Count: 2}}
 	qts = append(qts, singleNodeQuotas...)
 	quotas.BookMany(t, qts)
@@ -207,29 +246,35 @@ func TestAccCCENodesV3_eipIds(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3IpIDs,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 				),
 			},
 			{
 				Config: testAccCCENodeV3IpIDsUnset,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 				),
 			},
 		},
 	})
 }
 
-func TestAccCCENodesV3IpSetNull(t *testing.T) {
+func TestAccResourceCCENodesV3IpSetNull(t *testing.T) {
 	var node nodes.Nodes
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
 
-	t.Parallel()
 	shared.BookCluster(t)
+	t.Parallel()
+
 	qts := []*quotas.ExpectedQuota{{Q: quotas.FloatingIP, Count: 2}}
 	qts = append(qts, singleNodeQuotas...)
 	quotas.BookMany(t, qts)
@@ -237,12 +282,12 @@ func TestAccCCENodesV3IpSetNull(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3Ip,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceNameNode, "iptype", "5_bgp"),
 					resource.TestCheckResourceAttr(resourceNameNode, "sharetype", "PER"),
 					resource.TestCheckResourceAttr(resourceNameNode, "bandwidth_charge_mode", "traffic"),
@@ -251,18 +296,23 @@ func TestAccCCENodesV3IpSetNull(t *testing.T) {
 			{
 				Config: testAccCCENodeV3IpUnset,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 				),
 			},
 		},
 	})
 }
 
-func TestAccCCENodesV3IpCreate(t *testing.T) {
+func TestAccResourceCCENodesV3IpCreate(t *testing.T) {
 	var node nodes.Nodes
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
 
-	t.Parallel()
 	shared.BookCluster(t)
+	t.Parallel()
 	qts := []*quotas.ExpectedQuota{{Q: quotas.FloatingIP, Count: 1}}
 	qts = append(qts, singleNodeQuotas...)
 	quotas.BookMany(t, qts)
@@ -270,29 +320,34 @@ func TestAccCCENodesV3IpCreate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3IpUnset,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 				),
 			},
 			{
 				Config: testAccCCENodeV3Ip,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 				),
 			},
 		},
 	})
 }
 
-func TestAccCCENodesV3IpWithExtendedParameters(t *testing.T) {
+func TestAccResourceCCENodesV3IpWithExtendedParameters(t *testing.T) {
 	var node nodes.Nodes
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
 
-	t.Parallel()
 	shared.BookCluster(t)
+	t.Parallel()
 	qts := []*quotas.ExpectedQuota{{Q: quotas.FloatingIP, Count: 2}}
 	qts = append(qts, singleNodeQuotas...)
 	quotas.BookMany(t, qts)
@@ -300,12 +355,12 @@ func TestAccCCENodesV3IpWithExtendedParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3IpParams,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceNameNode, "iptype", "5_bgp"),
 					resource.TestCheckResourceAttr(resourceNameNode, "sharetype", "PER"),
 					resource.TestCheckResourceAttr(resourceNameNode, "bandwidth_charge_mode", "traffic"),
@@ -315,44 +370,57 @@ func TestAccCCENodesV3IpWithExtendedParameters(t *testing.T) {
 	})
 }
 
-func TestAccCCENodesV3IpNulls(t *testing.T) {
+func TestAccResourceCCENodesV3IpNulls(t *testing.T) {
 	var node nodes.Nodes
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
 
-	t.Parallel()
 	shared.BookCluster(t)
+	t.Parallel()
+
 	quotas.BookMany(t, singleNodeQuotas)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3IpNull,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 				),
 			},
 		},
 	})
 }
 
-func TestAccCCENodesV3EncryptedVolume(t *testing.T) {
+func TestAccResourceCCENodesV3EncryptedVolume(t *testing.T) {
 	var node nodes.Nodes
 
-	t.Parallel()
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
+
 	shared.BookCluster(t)
+	t.Parallel()
+
 	quotas.BookMany(t, singleNodeQuotas)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3EncryptedVolume,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceNameNode, "data_volumes.0.kms_id", env.OS_KMS_ID),
 					resource.TestCheckResourceAttr(resourceNameNode, "root_volume.0.kms_id", env.OS_KMS_ID),
 				),
@@ -361,11 +429,17 @@ func TestAccCCENodesV3EncryptedVolume(t *testing.T) {
 	})
 }
 
-func TestAccCCENodesV3TaintsK8sTags(t *testing.T) {
+func TestAccResourceCCENodesV3TaintsK8sTags(t *testing.T) {
 	var node nodes.Nodes
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
 
-	t.Parallel()
 	shared.BookCluster(t)
+	t.Parallel()
+
 	quotas.BookMany(t, singleNodeQuotas)
 
 	ip, _ := cidr.Host(shared.SubnetNet, 15)
@@ -374,12 +448,12 @@ func TestAccCCENodesV3TaintsK8sTags(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3TaintsK8sTags(privateIP),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceNameNode, "taints.0.key", "dedicated"),
 					resource.TestCheckResourceAttr(resourceNameNode, "taints.0.value", "database"),
 					resource.TestCheckResourceAttr(resourceNameNode, "taints.0.effect", "NoSchedule"),
@@ -390,21 +464,28 @@ func TestAccCCENodesV3TaintsK8sTags(t *testing.T) {
 	})
 }
 
-func TestAccCCENodesV3_extendParams(t *testing.T) {
+func TestAccResourceCCENodesV3_extendParams(t *testing.T) {
 	var node nodes.Nodes
-	t.Parallel()
+	rc := common.InitResourceCheck(
+		resourceNameNode,
+		&node,
+		getCceNodeResourceFunc,
+	)
+
 	shared.BookCluster(t)
+	t.Parallel()
+
 	quotas.BookMany(t, singleNodeQuotas)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccCCEKeyPairPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCENodeV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCENodeV3ExtendParams,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCCENodeV3Exists(resourceNameNode, shared.DataSourceClusterName, &node),
+					rc.CheckResourceExists(),
 				),
 			},
 		},
@@ -428,7 +509,7 @@ func testAccCheckCCENodeV3Destroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := nodes.Get(client, clusterID, rs.Primary.ID).Extract()
+		_, err := nodes.Get(client, clusterID, rs.Primary.ID)
 		if err == nil {
 			return fmt.Errorf("node still exists")
 		}
@@ -437,91 +518,12 @@ func testAccCheckCCENodeV3Destroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckCCENodeV3Exists(n string, cluster string, node *nodes.Nodes) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("not found: %s", n)
-		}
-		c, ok := s.RootModule().Resources[cluster]
-		if !ok {
-			return fmt.Errorf("cluster not found: %s", c)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no ID is set")
-		}
-		if c.Primary.ID == "" {
-			return fmt.Errorf("cluster id is not set")
-		}
-
-		config := common.TestAccProvider.Meta().(*cfg.Config)
-		client, err := config.CceV3Client(env.OS_REGION_NAME)
-		if err != nil {
-			return fmt.Errorf("error creating OpenTelekomCloud CCE client: %s", err)
-		}
-
-		found, err := nodes.Get(client, c.Primary.ID, rs.Primary.ID).Extract()
-		if err != nil {
-			return err
-		}
-
-		if found.Metadata.Id != rs.Primary.ID {
-			return fmt.Errorf("node not found")
-		}
-
-		*node = *found
-
-		return nil
-	}
-}
-
 var testAccCCENodeV3OS = fmt.Sprintf(`
 %s
 
-resource "opentelekomcloud_cce_node_v3" "node_1" {
-  cluster_id = data.opentelekomcloud_cce_cluster_v3.cluster.id
-  name       = "test-node"
-  flavor_id  = "s2.large.2"
-  os         = "EulerOS 2.5"
-
-  availability_zone = "%[2]s"
-  key_pair          = "%[3]s"
-
-  root_volume {
-    size       = 40
-    volumetype = "SATA"
-  }
-
-  data_volumes {
-    size       = 100
-    volumetype = "SATA"
-  }
-}
-
 resource "opentelekomcloud_cce_node_v3" "node_2" {
   cluster_id = data.opentelekomcloud_cce_cluster_v3.cluster.id
-  name       = "test-node"
-  flavor_id  = "s2.large.2"
-  os         = "CentOS 7.7"
-
-  availability_zone = "%[2]s"
-  key_pair          = "%[3]s"
-
-  root_volume {
-    size       = 40
-    volumetype = "SATA"
-  }
-
-  data_volumes {
-    size       = 100
-    volumetype = "SATA"
-  }
-}
-
-resource "opentelekomcloud_cce_node_v3" "node_3" {
-  cluster_id = data.opentelekomcloud_cce_cluster_v3.cluster.id
-  name       = "test-node"
+  name       = "test-node-euler"
   flavor_id  = "s2.large.2"
   os         = "EulerOS 2.9"
 
@@ -539,9 +541,9 @@ resource "opentelekomcloud_cce_node_v3" "node_3" {
   }
 }
 
-resource "opentelekomcloud_cce_node_v3" "node_4" {
+resource "opentelekomcloud_cce_node_v3" "node_3" {
   cluster_id = data.opentelekomcloud_cce_cluster_v3.cluster.id
-  name       = "test-node"
+  name       = "test-node-ubuntu"
   flavor_id  = "s2.large.2"
   os         = "Ubuntu 22.04"
 
