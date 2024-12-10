@@ -835,6 +835,8 @@ func setK8sNodeFields(d *schema.ResourceData, config *cfg.Config, clusterID, pri
 		}
 		k8sTags[key] = value
 	}
+	delete(k8sTags, "node.cce.io/billing-mode")
+	delete(k8sTags, "node.cce.io/eni-network-mode")
 	if err := d.Set("k8s_tags", k8sTags); err != nil {
 		return fmt.Errorf("error setting k8s_tags for CCE Node: %w", err)
 	}
