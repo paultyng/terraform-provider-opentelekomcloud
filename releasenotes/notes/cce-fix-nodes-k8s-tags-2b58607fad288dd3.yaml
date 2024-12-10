@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    **[CCE]** Removed auto-generated k8s tags in ``resource/opentelekomcloud_cce_node_v3`` (`#2757 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2757>`_)
