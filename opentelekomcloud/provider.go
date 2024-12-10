@@ -546,6 +546,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_obs_bucket_acl":                            obs.ResourceOBSBucketAcl(),
 			"opentelekomcloud_obs_bucket_inventory":                      obs.ResourceObsBucketInventory(),
 			"opentelekomcloud_obs_bucket_object":                         obs.ResourceObsBucketObject(),
+			"opentelekomcloud_obs_bucket_object_acl":                     obs.ResourceOBSBucketObjectAcl(),
 			"opentelekomcloud_obs_bucket_policy":                         obs.ResourceObsBucketPolicy(),
 			"opentelekomcloud_obs_bucket_replication":                    obs.ResourceObsBucketReplication(),
 			"opentelekomcloud_rds_backup_v3":                             rds.ResourceRdsBackupV3(),
