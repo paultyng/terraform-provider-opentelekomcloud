@@ -168,7 +168,7 @@ func ResourceCssClusterV1() *schema.Resource {
 			"tags": {
 				Type:         schema.TypeMap,
 				Optional:     true,
-				ForceNew:     true,
+				Computed:     true,
 				ValidateFunc: common.ValidateTags,
 			},
 			"endpoint": {
@@ -323,6 +323,12 @@ func resourceCssClusterV1Update(ctx context.Context, d *schema.ResourceData, met
 	client, err := config.CssV1Client(config.GetRegion(d))
 	if err != nil {
 		return fmterr.Errorf("error creating CSS v1 client: %s", err)
+	}
+
+	if d.HasChange("tags") {
+		if err := common.UpdateResourceTags(client, d, "css-cluster", d.Id()); err != nil {
+			return fmterr.Errorf("error updating tags of CSS cluster %s: %s", d.Id(), err)
+		}
 	}
 
 	if !d.HasChange("expect_node_num") && !d.HasChange("node_config.0.volume.0.size") {

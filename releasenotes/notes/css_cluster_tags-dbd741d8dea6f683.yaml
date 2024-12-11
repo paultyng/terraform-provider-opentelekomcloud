@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    **[CSS]** CSS cluster fix tags update ``resource/opentelekomcloud_css_cluster_v1``
+    (`# <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/>`_)
