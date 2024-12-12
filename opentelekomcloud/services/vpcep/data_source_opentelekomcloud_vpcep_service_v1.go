@@ -116,14 +116,9 @@ func dataSourceVPCEPServiceV1Read(_ context.Context, d *schema.ResourceData, met
 		Status: services.Status(d.Get("status").(string)),
 	}
 
-	pages, err := services.List(client, opts).AllPages()
+	svcs, err := services.List(client, opts)
 	if err != nil {
 		return fmterr.Errorf("error listing VPCEP public services: %w", err)
-	}
-
-	svcs, err := services.ExtractServices(pages)
-	if err != nil {
-		return fmterr.Errorf("error extracting services: %w", err)
 	}
 
 	if len(svcs) > 1 {
@@ -141,7 +136,7 @@ func dataSourceVPCEPServiceV1Read(_ context.Context, d *schema.ResourceData, met
 		d.Set("port_id", svc.PortID),
 		d.Set("vip_port_id", svc.VIPPortID),
 		d.Set("server_type", svc.ServerType),
-		d.Set("vpc_id", svc.RouterID),
+		d.Set("vpc_id", svc.VpcID),
 		d.Set("approval_enabled", svc.ApprovalEnabled),
 		d.Set("service_type", svc.ServiceType),
 		d.Set("created_at", svc.CreatedAt),

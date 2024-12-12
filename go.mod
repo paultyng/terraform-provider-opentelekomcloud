@@ -17,7 +17,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/keybase/go-crypto v0.0.0-20200123153347-de78d2cb44f4
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/opentelekomcloud/gophertelekomcloud v0.9.4-0.20241210160040-3b0fb9159f71
+	github.com/opentelekomcloud/gophertelekomcloud v0.9.4-0.20241211090426-8e0297aa1379
 	github.com/unknwon/com v1.0.1
 	golang.org/x/crypto v0.23.0
 	golang.org/x/sync v0.1.0

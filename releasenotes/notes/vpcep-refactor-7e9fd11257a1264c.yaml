@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    **[VPCEP]** refactoring and update for ``resource/opentelekomcloud_vpcep_endpoint_v1`` (`#2762 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2762>`_)
+  - |
+    **[VPCEP]** refactoring and update for ``resource/opentelekomcloud_vpcep_service_v1`` (`#2762 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2762>`_)

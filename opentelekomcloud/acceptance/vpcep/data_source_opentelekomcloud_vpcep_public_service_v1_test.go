@@ -11,16 +11,18 @@ import (
 
 const dataSourcePublicService = "data.opentelekomcloud_vpcep_public_service_v1.obs"
 
-func TestDataSourcePublicService(t *testing.T) {
+func TestDataSourceVPCEPPublicService(t *testing.T) {
+	dc := common.InitDataSourceCheck(dataSourcePublicService)
 	t.Parallel()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      checkServiceDestroy,
+		CheckDestroy:      dc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testDataSourcePublicService,
 				Check: resource.ComposeTestCheckFunc(
+					dc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(dataSourcePublicService, "owner", "OTC"),
 					resource.TestCheckResourceAttr(dataSourcePublicService, "service_type", "gateway"),
 				),
