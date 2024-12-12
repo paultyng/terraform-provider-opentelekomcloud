@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    **[CCE]** Refactor v3 nodepool tests and fixed to match changes in gopher (`#2763 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2763>`_)
