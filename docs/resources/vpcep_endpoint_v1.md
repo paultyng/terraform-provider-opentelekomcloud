@@ -61,11 +61,11 @@ resource "opentelekomcloud_vpcep_endpoint_v1" "endpoint" {
 
 The following arguments are supported:
 
-* `service_id` - (Required) Specifies the ID of the VPC endpoint service.
+* `service_id` - (Required, String, ForceNew) Specifies the ID of the VPC endpoint service.
 
-* `vpc_id` - (Required) Specifies the ID of the VPC (OpenStack router) where the VPC endpoint is to be created.
+* `vpc_id` - (Required, String, ForceNew) Specifies the ID of the VPC (OpenStack router) where the VPC endpoint is to be created.
 
-* `subnet_id` - (Optional) The value must be the ID of the subnet (OpenStack network) created in the VPC specified
+* `subnet_id` - (Optional, String, ForceNew) The value must be the ID of the subnet (OpenStack network) created in the VPC specified
   by `vpc_id` and in the format of the UUID.
   This parameter is mandatory only if you create a VPC endpoint for connecting to an interface VPC endpoint service.
 
@@ -73,20 +73,23 @@ The following arguments are supported:
 The CIDR block of the VPC subnet cannot overlap with `198.19.128.0/20`. The destination address of the custom route in
 the VPC route table cannot overlap with the CIDR block `198.19.128.0/20`.
 
-* `enable_dns` - (Optional) Specifies whether to create a private domain name. The default value is `false`.
+* `enable_dns` - (Optional, Bool, ForceNew) Specifies whether to create a private domain name. The default value is `false`.
 
-* `route_tables` - (Optional) Lists the IDs of route tables.
+* `description` - (Optional, String, ForceNew) Specifies the description of the VPC endpoint. The value can contain
+  characters such as letters and digits, but cannot contain less than signs (<) and great than signs (>).
 
-* `port_ip` - (Optional) Specifies the IP address for accessing the associated VPC endpoint service.
+* `route_tables` - (Optional, List, ForceNew) Lists the IDs of route tables.
 
-* `whitelist` - (Optional) Specifies an array of whitelisted IPs for controlling access to the VPC endpoint.
+* `port_ip` - (Optional, String, ForceNew) Specifies the IP address for accessing the associated VPC endpoint service.
+
+* `whitelist` - (Optional, List, ForceNew) Specifies an array of whitelisted IPs for controlling access to the VPC endpoint.
   ``IPv4 addresses`` or ``CIDR blocks`` can be specified to control access when you create a VPC endpoint.
   This parameter is mandatory only when you create a ``VPC endpoint`` for connecting to an interface VPC endpoint service.
 
-* `enable_whitelist` - (Optional) Specifies whether to enable access control.
+* `enable_whitelist` - (Optional, Bool, ForceNew) Specifies whether to enable access control.
   This parameter is available only if you create a ``VPC endpoint`` for connecting to an interface VPC endpoint service.
 
-* `tags` - (Optional) Lists the resource tags.
+* `tags` - (Optional, Map) The key/value pairs to associate with the VPC endpoint.
 
 ## Attributes Reference
 
@@ -104,6 +107,9 @@ In addition to all arguments above, the following attributes are exported:
   This parameter is only available when `enable_dns` is set to `true`.
 
 * `project_id` - Specifies the project ID.
+
+* `status` - The status of the VPC endpoint. The value can be `pendingAcceptance`, `creating`, `accepted`,
+    `rejected`, `failed`, `deleting`.
 
 ## Import
 

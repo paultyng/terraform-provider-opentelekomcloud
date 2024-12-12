@@ -2,6 +2,7 @@ package vpcep
 
 import (
 	"context"
+	"log"
 	"regexp"
 	"strings"
 	"time"
@@ -141,6 +142,51 @@ func ResourceVPCEPServiceV1() *schema.Resource {
 				ValidateFunc: common.ValidateTags,
 				ForceNew:     true,
 			},
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"status": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"connections": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"endpoint_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"packet_id": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"domain_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"status": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"description": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"created_at": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"updated_at": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -160,6 +206,7 @@ func resourceVPCEPServiceCreate(ctx context.Context, d *schema.ResourceData, met
 		VIPPortID:       d.Get("vip_port_id").(string),
 		ServiceName:     d.Get("name").(string),
 		VpcId:           d.Get("vpc_id").(string),
+		Description:     d.Get("description").(string),
 		ApprovalEnabled: &approvalEnabled,
 		ServiceType:     services.ServiceType(d.Get("service_type").(string)),
 		ServerType:      services.ServerType(d.Get("server_type").(string)),
@@ -228,16 +275,45 @@ func resourceVPCEPServiceRead(ctx context.Context, d *schema.ResourceData, meta 
 		d.Set("approval_enabled", svc.ApprovalEnabled),
 		d.Set("service_type", svc.ServiceType),
 		d.Set("server_type", svc.ServerType),
+		d.Set("description", svc.Description),
 		d.Set("port", portsSlice(svc.Ports)),
 		d.Set("tags", common.TagsToMap(svc.Tags)),
 		d.Set("whitelist", whitelistSlice(*whitelist)),
 	)
+
+	// fetch connections
+	if connections, err := flattenVPCEndpointConnections(client, d.Id()); err == nil {
+		mErr = multierror.Append(mErr, d.Set("connections", connections))
+	}
 
 	if err := mErr.ErrorOrNil(); err != nil {
 		return fmterr.Errorf("error setting VPC EP service attributes: %w", err)
 	}
 
 	return nil
+}
+
+func flattenVPCEndpointConnections(client *golangsdk.ServiceClient, id string) ([]map[string]interface{}, error) {
+	allConnections, err := services.ListConnections(client, id, services.ListConnectionsOpts{})
+	if err != nil {
+		log.Printf("[WARN] Error querying connections of VPC endpoint service: %s", err)
+		return nil, err
+	}
+
+	log.Printf("[DEBUG] retrieving connections of VPC endpoint service: %#v", allConnections)
+	connections := make([]map[string]interface{}, len(allConnections))
+	for i, v := range allConnections {
+		connections[i] = map[string]interface{}{
+			"endpoint_id": v.ID,
+			"packet_id":   v.MarkerId,
+			"domain_id":   v.DomainId,
+			"status":      v.Status,
+			"created_at":  v.CreatedAt,
+			"updated_at":  v.UpdatedAt,
+		}
+	}
+
+	return connections, nil
 }
 
 func resourceVPCEPServiceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -257,6 +333,9 @@ func resourceVPCEPServiceUpdate(ctx context.Context, d *schema.ResourceData, met
 	}
 	if d.HasChange("name") {
 		opts.ServiceName = d.Get("name").(string)
+	}
+	if d.HasChange("description") {
+		opts.Description = d.Get("description").(string)
 	}
 	if d.HasChange("port") {
 		opts.Ports = getPorts(d)

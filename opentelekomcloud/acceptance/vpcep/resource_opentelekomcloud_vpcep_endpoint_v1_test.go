@@ -52,6 +52,14 @@ func TestVPCEndpoint_basic(t *testing.T) {
 				),
 			},
 			{
+				Config: testEndpointBasic_Update(name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceEndpointName, "status", "accepted"),
+					resource.TestCheckResourceAttr(resourceEndpointName, "tags.owner", "tf-acc-update"),
+					resource.TestCheckResourceAttr(resourceEndpointName, "tags.foo", "bar"),
+				),
+			},
+			{
 				ImportState:       true,
 				ImportStateVerify: true,
 				ResourceName:      resourceEndpointName,
@@ -76,4 +84,23 @@ resource "opentelekomcloud_vpcep_endpoint_v1" "endpoint" {
   }
 }
 `, testServiceBasic(name))
+}
+
+func testEndpointBasic_Update(rName string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "opentelekomcloud_vpcep_endpoint_v1" "endpoint" {
+  service_id = opentelekomcloud_vpcep_service_v1.service.id
+  vpc_id     = opentelekomcloud_vpcep_service_v1.service.vpc_id
+  subnet_id  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.id
+  port_ip    = cidrhost(data.opentelekomcloud_vpc_subnet_v1.shared_subnet.cidr, 32)
+  enable_dns = true
+
+  tags = {
+    owner = "tf-acc-update"
+    foo   = "bar"
+  }
+}
+`, testServiceBasic(rName))
 }

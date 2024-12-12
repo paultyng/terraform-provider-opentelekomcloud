@@ -97,6 +97,7 @@ resource "opentelekomcloud_vpcep_service_v1" "service" {
   port_id     = opentelekomcloud_lb_loadbalancer_v2.lb_1.vip_port_id
   vpc_id      = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   server_type = "LB"
+  description = "test description update"
 
   approval_enabled = false
 
@@ -126,6 +127,7 @@ resource "opentelekomcloud_vpcep_service_v1" "service" {
   port_id     = opentelekomcloud_lb_loadbalancer_v2.lb_1.vip_port_id
   vpc_id      = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   server_type = "LB"
+  description = "test description updated"
 
   approval_enabled = true
 
