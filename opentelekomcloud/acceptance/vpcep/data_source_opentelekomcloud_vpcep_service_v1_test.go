@@ -12,7 +12,8 @@ import (
 
 const dataSourceServiceName = "data.opentelekomcloud_vpcep_service_v1.service"
 
-func TestDataSourceService(t *testing.T) {
+func TestDataSourceVPCEPService(t *testing.T) {
+	dc := common.InitDataSourceCheck(dataSourceServiceName)
 	name := tools.RandomString("tf-test-", 4)
 	t.Parallel()
 	quotas.BookOne(t, serviceQuota)
@@ -20,7 +21,7 @@ func TestDataSourceService(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      checkServiceDestroy,
+		CheckDestroy:      dc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testServiceBasic(name),

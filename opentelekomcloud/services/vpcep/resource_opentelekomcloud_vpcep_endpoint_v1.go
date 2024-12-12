@@ -121,7 +121,7 @@ func resourceVPCEPEndpointCreate(ctx context.Context, d *schema.ResourceData, me
 	opts := endpoints.CreateOpts{
 		NetworkID: d.Get("subnet_id").(string),
 		ServiceID: d.Get("service_id").(string),
-		RouterID:  d.Get("vpc_id").(string),
+		VpcId:     d.Get("vpc_id").(string),
 		PortIP:    d.Get("port_ip").(string),
 		EnableDNS: d.Get("enable_dns").(bool),
 		Tags: common.ExpandResourceTags(
@@ -138,7 +138,7 @@ func resourceVPCEPEndpointCreate(ctx context.Context, d *schema.ResourceData, me
 		enable := v.(bool)
 		opts.EnableWhitelist = &enable
 	}
-	created, err := endpoints.Create(client, opts).Extract()
+	created, err := endpoints.Create(client, opts)
 	if err != nil {
 		return fmterr.Errorf("error creating VPC Endpoint: %w", err)
 	}
@@ -160,7 +160,7 @@ func resourceVPCEPEndpointCreate(ctx context.Context, d *schema.ResourceData, me
 
 func refreshVPCEndpoint(client *golangsdk.ServiceClient, id string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		ep, err := endpoints.Get(client, id).Extract()
+		ep, err := endpoints.Get(client, id)
 		if err != nil {
 			if _, ok := err.(golangsdk.ErrDefault404); ok {
 				return nil, "", nil
@@ -179,7 +179,7 @@ func resourceVPCEPEndpointRead(_ context.Context, d *schema.ResourceData, meta i
 		return fmterr.Errorf(ErrClientCreate, err)
 	}
 
-	endpoint, err := endpoints.Get(client, d.Id()).Extract()
+	endpoint, err := endpoints.Get(client, d.Id())
 	if err != nil {
 		return fmterr.Errorf("error getting VPC Endpoint: %w", err)
 	}
@@ -194,7 +194,7 @@ func resourceVPCEPEndpointRead(_ context.Context, d *schema.ResourceData, meta i
 		d.Set("port_ip", endpoint.IP),
 		d.Set("enable_whitelist", endpoint.EnableWhitelist),
 		d.Set("whitelist", endpoint.Whitelist),
-		d.Set("vpc_id", endpoint.RouterID),
+		d.Set("vpc_id", endpoint.VpcID),
 		d.Set("subnet_id", endpoint.NetworkID),
 		d.Set("marker_id", endpoint.MarkerID),
 		d.Set("tags", common.TagsToMap(endpoint.Tags)),
@@ -214,12 +214,18 @@ func resourceVPCEPEndpointDelete(_ context.Context, d *schema.ResourceData, meta
 		return fmterr.Errorf(ErrClientCreate, err)
 	}
 
-	err = endpoints.Delete(client, d.Id()).ExtractErr()
+	err = endpoints.Delete(client, d.Id())
 	if err != nil {
 		if _, ok := err.(golangsdk.ErrDefault404); ok {
 			return nil
 		}
 		return fmterr.Errorf("error deleting VPC endpoint: %w", err)
+	}
+	err = endpoints.WaitForEndpointStatus(
+		client, d.Id(), "", timeoutSeconds(d, schema.TimeoutDelete),
+	)
+	if err != nil {
+		return fmterr.Errorf("error waiting for VPC EP endpoint to become deleted: %w", err)
 	}
 
 	return nil

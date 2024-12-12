@@ -55,19 +55,14 @@ func dataSourceVPCEPPublicServiceV1Read(_ context.Context, d *schema.ResourceDat
 		return fmterr.Errorf(ErrClientCreate, err)
 	}
 
-	opts := services.ListOpts{
+	opts := services.ListPublicOpts{
 		Name: d.Get("name").(string),
 		ID:   d.Get("id").(string),
 	}
 
-	pages, err := services.ListPublic(client, opts).AllPages()
+	svcs, err := services.ListPublic(client, opts)
 	if err != nil {
 		return fmterr.Errorf("error listing VPCEP public services: %w", err)
-	}
-
-	svcs, err := services.ExtractPublicServices(pages)
-	if err != nil {
-		return fmterr.Errorf("error extracting services: %w", err)
 	}
 
 	if len(svcs) > 1 {

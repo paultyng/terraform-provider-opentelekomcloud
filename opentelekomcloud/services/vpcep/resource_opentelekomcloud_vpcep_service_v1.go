@@ -145,8 +145,6 @@ func ResourceVPCEPServiceV1() *schema.Resource {
 	}
 }
 
-const keyClient = "vpcep-client"
-
 func resourceVPCEPServiceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*cfg.Config)
 
@@ -156,12 +154,12 @@ func resourceVPCEPServiceCreate(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	approvalEnabled := d.Get("approval_enabled").(bool)
-	opts := &services.CreateOpts{
+	opts := services.CreateOpts{
 		PortID:          d.Get("port_id").(string),
 		PoolID:          d.Get("pool_id").(string),
 		VIPPortID:       d.Get("vip_port_id").(string),
 		ServiceName:     d.Get("name").(string),
-		RouterID:        d.Get("vpc_id").(string),
+		VpcId:           d.Get("vpc_id").(string),
 		ApprovalEnabled: &approvalEnabled,
 		ServiceType:     services.ServiceType(d.Get("service_type").(string)),
 		ServerType:      services.ServerType(d.Get("server_type").(string)),
@@ -170,7 +168,7 @@ func resourceVPCEPServiceCreate(ctx context.Context, d *schema.ResourceData, met
 		Tags:            common.ExpandResourceTags(d.Get("tags").(map[string]interface{})),
 	}
 
-	svc, err := services.Create(client, opts).Extract()
+	svc, err := services.Create(client, opts)
 	if err != nil {
 		return fmterr.Errorf("error creating VPC EP service: %w", err)
 	}
@@ -207,7 +205,7 @@ func resourceVPCEPServiceRead(ctx context.Context, d *schema.ResourceData, meta 
 		return fmterr.Errorf(ErrClientCreate, err)
 	}
 
-	svc, err := services.Get(client, d.Id()).Extract()
+	svc, err := services.Get(client, d.Id())
 	if err != nil {
 		if _, ok := err.(golangsdk.ErrDefault404); ok {
 			d.SetId("")
@@ -226,7 +224,7 @@ func resourceVPCEPServiceRead(ctx context.Context, d *schema.ResourceData, meta 
 		d.Set("pool_id", svc.PoolID),
 		d.Set("vip_port_id", svc.VIPPortID),
 		d.Set("name", onlyServiceName(svc.ServiceName)),
-		d.Set("vpc_id", svc.RouterID),
+		d.Set("vpc_id", svc.VpcID),
 		d.Set("approval_enabled", svc.ApprovalEnabled),
 		d.Set("service_type", svc.ServiceType),
 		d.Set("server_type", svc.ServerType),
@@ -250,7 +248,7 @@ func resourceVPCEPServiceUpdate(ctx context.Context, d *schema.ResourceData, met
 		return fmterr.Errorf(ErrClientCreate, err)
 	}
 
-	opts := &services.UpdateOpts{}
+	opts := services.UpdateOpts{}
 	if d.HasChange("port_id") {
 		opts.PortID = d.Get("port_id").(string)
 	}
@@ -268,7 +266,7 @@ func resourceVPCEPServiceUpdate(ctx context.Context, d *schema.ResourceData, met
 		opts.ApprovalEnabled = &enabled
 	}
 
-	_, err = services.Update(client, d.Id(), opts).Extract()
+	_, err = services.Update(client, d.Id(), opts)
 	if err != nil {
 		return fmterr.Errorf("error updating VPC EP service: %w", err)
 	}
@@ -329,7 +327,7 @@ func resourceVPCEPServiceDelete(_ context.Context, d *schema.ResourceData, meta 
 		return fmterr.Errorf(ErrClientCreate, err)
 	}
 
-	err = services.Delete(client, d.Id()).ExtractErr()
+	err = services.Delete(client, d.Id())
 	if err != nil {
 		if _, ok := err.(golangsdk.ErrDefault404); ok {
 			return nil

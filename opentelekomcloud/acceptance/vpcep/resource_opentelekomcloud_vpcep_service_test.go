@@ -6,34 +6,47 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/acceptance/tools"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/vpcep/v1/services"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/common"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/common/quotas"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/env"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/cfg"
-	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/services/vpcep"
 )
 
 const resourceVPCEPServiceName = "opentelekomcloud_vpcep_service_v1.service"
 
-func TestService_basic(t *testing.T) {
+func getVPCServiceFunc(config *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	client, err := config.VpcEpV1Client(env.OS_REGION_NAME)
+	if err != nil {
+		return nil, fmt.Errorf("error creating VPCEP v1 client: %s", err)
+	}
+	return services.Get(client, state.Primary.ID)
+}
+
+func TestVPCEPService_basic(t *testing.T) {
 	var svc services.Service
 	srvName := tools.RandomString("tf-test-", 4)
 	srvName2 := tools.RandomString("tf-test-", 4)
+
+	rc := common.InitResourceCheck(
+		resourceVPCEPServiceName,
+		&svc,
+		getVPCServiceFunc,
+	)
+
 	t.Parallel()
 	quotas.BookOne(t, serviceQuota)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      checkServiceDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testServiceBasic(srvName),
 				Check: resource.ComposeTestCheckFunc(
-					checkServiceExists(resourceVPCEPServiceName, &svc),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceVPCEPServiceName, "name", srvName),
 					resource.TestCheckResourceAttr(resourceVPCEPServiceName, "port.#", "1"),
 					resource.TestCheckResourceAttr(resourceVPCEPServiceName, "server_type", "LB"),
@@ -49,22 +62,6 @@ func TestService_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceVPCEPServiceName, "port.#", "2"),
 				),
 			},
-		},
-	})
-}
-func TestService_import(t *testing.T) {
-	srvName := tools.RandomString("tf-test-", 4)
-	t.Parallel()
-	quotas.BookOne(t, serviceQuota)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { common.TestAccPreCheck(t) },
-		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      checkServiceDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testServiceBasic(srvName),
-			},
 			{
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -72,29 +69,6 @@ func TestService_import(t *testing.T) {
 			},
 		},
 	})
-}
-
-func checkServiceExists(name string, svc *services.Service) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[name]
-		if !ok {
-			return fmt.Errorf("not found: %s", name)
-		}
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no ID is set")
-		}
-		config := common.TestAccProvider.Meta().(*cfg.Config)
-		client, err := config.VpcEpV1Client(env.OS_REGION_NAME)
-		if err != nil {
-			return fmt.Errorf(vpcep.ErrClientCreate, err)
-		}
-		found, err := services.Get(client, rs.Primary.ID).Extract()
-		if err != nil {
-			return fmt.Errorf("error getting service: %w", err)
-		}
-		*svc = *found
-		return nil
-	}
 }
 
 func checkServiceIDPersist(name string, svc *services.Service) resource.TestCheckFunc {
@@ -108,28 +82,6 @@ func checkServiceIDPersist(name string, svc *services.Service) resource.TestChec
 		}
 		return nil
 	}
-}
-
-func checkServiceDestroy(s *terraform.State) error {
-	config := common.TestAccProvider.Meta().(*cfg.Config)
-	client, err := config.VpcEpV1Client(env.OS_REGION_NAME)
-	if err != nil {
-		return fmt.Errorf(vpcep.ErrClientCreate, err)
-	}
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "opentelekomcloud_vpcep_service_v1" {
-			continue
-		}
-		svc, err := services.Get(client, rs.Primary.ID).Extract()
-		if err != nil {
-			if _, ok := err.(golangsdk.ErrDefault404); ok {
-				return nil
-			}
-			return fmt.Errorf("error getting service state: %w", err)
-		}
-		return fmt.Errorf("VPC Endpoint service %s still exists", svc.ServiceName)
-	}
-	return nil
 }
 
 func testServiceBasic(name string) string {
