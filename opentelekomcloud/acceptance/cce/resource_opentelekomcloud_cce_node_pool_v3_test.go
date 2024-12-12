@@ -23,7 +23,7 @@ func getNodePoolFunc(conf *cfg.Config, state *terraform.ResourceState) (interfac
 	if err != nil {
 		return nil, fmt.Errorf("error creating OpenTelekomCloud CCE client: %s", err)
 	}
-	return nodepools.Get(client, state.Primary.Attributes["cluster_id"], state.Primary.ID).Extract()
+	return nodepools.Get(client, state.Primary.Attributes["cluster_id"], state.Primary.ID)
 }
 
 func TestAccCCENodePoolsV3_basic(t *testing.T) {

@@ -415,13 +415,13 @@ func resourceCCENodePoolV3Create(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	log.Printf("[DEBUG] Create Options: %#v", createOpts)
-	pool, err := nodepools.Create(client, clusterID, createOpts).Extract()
+	pool, err := nodepools.Create(client, clusterID, createOpts)
 	switch err.(type) {
 	case golangsdk.ErrDefault403:
 		if _, err := clusterStateConf.WaitForStateContext(ctx); err != nil {
 			return fmterr.Errorf("error waiting for cluster to be available: %w", err)
 		}
-		retried, err := nodepools.Create(client, clusterID, createOpts).Extract()
+		retried, err := nodepools.Create(client, clusterID, createOpts)
 		if err != nil {
 			return fmterr.Errorf(createError, err)
 		}
@@ -459,7 +459,7 @@ func resourceCCENodePoolV3Read(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	clusterID := d.Get("cluster_id").(string)
-	s, err := nodepools.Get(client, clusterID, d.Id()).Extract()
+	s, err := nodepools.Get(client, clusterID, d.Id())
 	if err != nil {
 		return common.CheckDeletedDiag(d, err, "CCE Node Pool")
 	}
@@ -576,7 +576,7 @@ func resourceCCENodePoolV3Update(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	clusterID := d.Get("cluster_id").(string)
-	_, err = nodepools.Update(client, clusterID, d.Id(), updateOpts).Extract()
+	_, err = nodepools.Update(client, clusterID, d.Id(), updateOpts)
 	if err != nil {
 		return fmterr.Errorf("error updating Open Telekom Cloud CCE Node Pool: %w", err)
 	}
@@ -608,7 +608,7 @@ func resourceCCENodePoolV3Delete(ctx context.Context, d *schema.ResourceData, me
 
 	clusterID := d.Get("cluster_id").(string)
 
-	if err := nodepools.Delete(client, clusterID, d.Id()).ExtractErr(); err != nil {
+	if err := nodepools.Delete(client, clusterID, d.Id()); err != nil {
 		return fmterr.Errorf("error deleting Open Telekom Cloud CCE Node Pool: %w", err)
 	}
 
@@ -632,7 +632,7 @@ func resourceCCENodePoolV3Delete(ctx context.Context, d *schema.ResourceData, me
 
 func waitForCceNodePoolActive(cceClient *golangsdk.ServiceClient, clusterId, nodePoolId string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		n, err := nodepools.Get(cceClient, clusterId, nodePoolId).Extract()
+		n, err := nodepools.Get(cceClient, clusterId, nodePoolId)
 		if err != nil {
 			return nil, "", err
 		}
@@ -644,7 +644,7 @@ func waitForCceNodePoolDelete(cceClient *golangsdk.ServiceClient, clusterID, nod
 	return func() (interface{}, string, error) {
 		log.Printf("[DEBUG] Attempting to delete Open Telekom Cloud CCE Node Pool %s.\n", nodePoolID)
 
-		r, err := nodepools.Get(cceClient, clusterID, nodePoolID).Extract()
+		r, err := nodepools.Get(cceClient, clusterID, nodePoolID)
 
 		if err != nil {
 			if _, ok := err.(golangsdk.ErrDefault404); ok {
