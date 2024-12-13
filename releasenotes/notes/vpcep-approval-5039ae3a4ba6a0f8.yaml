@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    **New Resource:** ``opentelekomcloud_vpcep_approval_v1`` (`#2764 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2764>`_)
