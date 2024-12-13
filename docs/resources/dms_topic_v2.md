@@ -35,7 +35,7 @@ data "opentelekomcloud_dms_product_v1" "product_1" {
   storage_spec_code = "dms.physical.storage.high"
 }
 
-resource "opentelekomcloud_dms_instance_v1" "instance_1" {
+resource "opentelekomcloud_dms_instance_v2" "instance_1" {
   name              = "kafka-test"
   engine            = "kafka"
   product_id        = data.opentelekomcloud_dms_product_v1.product_1.id
