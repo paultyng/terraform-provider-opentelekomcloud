@@ -3,28 +3,26 @@ package dms
 import (
 	"context"
 	"log"
-	"strconv"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/opentelekomcloud/gophertelekomcloud/openstack/dms/v1/topics"
+	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/dms/v2/topics"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/cfg"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/fmterr"
 )
 
-func ResourceDmsTopicsV1() *schema.Resource {
+func ResourceDmsTopicsV2() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDmsTopicsV1Create,
-		ReadContext:   resourceDmsTopicsV1Read,
-		DeleteContext: resourceDmsTopicsV1Delete,
+		CreateContext: resourceDmsTopicsV2Create,
+		ReadContext:   resourceDmsTopicsV2Read,
+		DeleteContext: resourceDmsTopicsV2Delete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
-
-		DeprecationMessage: dmsV1Deprecated,
 
 		Schema: map[string]*schema.Schema{
 			"instance_id": {
@@ -43,7 +41,7 @@ func ResourceDmsTopicsV1() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.IntBetween(1, 20),
+				ValidateFunc: validation.IntBetween(1, 200),
 			},
 			"replication": {
 				Type:         schema.TypeInt,
@@ -90,14 +88,16 @@ func ResourceDmsTopicsV1() *schema.Resource {
 	}
 }
 
-func resourceDmsTopicsV1Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDmsTopicsV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*cfg.Config)
-	DmsV1Client, err := config.DmsV1Client(config.GetRegion(d))
+	DmsV2Client, err := common.ClientFromCtx(ctx, errCreationClientV2, func() (*golangsdk.ServiceClient, error) {
+		return config.DmsV2Client(config.GetRegion(d))
+	})
 	if err != nil {
-		return fmterr.Errorf(errCreationClient, err)
+		return fmterr.Errorf(errCreationClientV2, err)
 	}
 
-	createOpts := &topics.CreateOpts{
+	createOpts := topics.CreateOpts{
 		Name:             d.Get("name").(string),
 		Partition:        d.Get("partition").(int),
 		Replication:      d.Get("replication").(int),
@@ -106,31 +106,35 @@ func resourceDmsTopicsV1Create(ctx context.Context, d *schema.ResourceData, meta
 		SyncMessageFlush: d.Get("sync_message_flush").(bool),
 	}
 	log.Printf("[DEBUG] Create Options: %#v", createOpts)
-	v, err := topics.Create(DmsV1Client, createOpts, d.Get("instance_id").(string)).Extract()
+	v, err := topics.Create(DmsV2Client, d.Get("instance_id").(string), createOpts)
 	if err != nil {
 		return fmterr.Errorf("error creating OpenTelekomCloud queue: %s", err)
 	}
-	// Store the topic Name/ID now
+
 	d.SetId(v.Name)
 
-	return resourceDmsTopicsV1Read(ctx, d, meta)
+	clientCtx := common.CtxWithClient(ctx, DmsV2Client, errCreationClientV2)
+	return resourceDmsTopicsV2Read(clientCtx, d, meta)
 }
 
-func resourceDmsTopicsV1Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDmsTopicsV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*cfg.Config)
 
-	DmsV1Client, err := config.DmsV1Client(config.GetRegion(d))
+	DmsV2Client, err := common.ClientFromCtx(ctx, errCreationClientV2, func() (*golangsdk.ServiceClient, error) {
+		return config.DmsV2Client(config.GetRegion(d))
+	})
 	if err != nil {
-		return fmterr.Errorf(errCreationClient, err)
+		return fmterr.Errorf(errCreationClientV2, err)
 	}
+
 	instanceId := d.Get("instance_id").(string)
 
-	v, err := topics.Get(DmsV1Client, instanceId).Extract()
+	v, err := topics.List(DmsV2Client, instanceId)
 	if err != nil {
 		return common.CheckDeletedDiag(d, err, "DMS topic")
 	}
 
-	var fTopic topics.Parameters
+	var fTopic topics.Topic
 	found := false
 
 	for _, topic := range v.Topics {
@@ -144,10 +148,6 @@ func resourceDmsTopicsV1Read(_ context.Context, d *schema.ResourceData, meta int
 		return fmterr.Errorf("Provided topic doesn't exist")
 	}
 
-	// conversion is done because API values are returned as strings
-	syncReplication, _ := strconv.ParseBool(fTopic.SyncReplication)
-	syncMessageFlush, _ := strconv.ParseBool(fTopic.SyncMessageFlush)
-
 	var mErr *multierror.Error
 
 	mErr = multierror.Append(
@@ -155,9 +155,9 @@ func resourceDmsTopicsV1Read(_ context.Context, d *schema.ResourceData, meta int
 		d.Set("name", fTopic.Name),
 		d.Set("partition", fTopic.Partition),
 		d.Set("replication", fTopic.Replication),
-		d.Set("sync_replication", syncReplication),
+		d.Set("sync_replication", fTopic.SyncReplication),
 		d.Set("retention_time", fTopic.RetentionTime),
-		d.Set("sync_message_flush", syncMessageFlush),
+		d.Set("sync_message_flush", fTopic.SyncMessageFlush),
 		d.Set("size", v.Size),
 		d.Set("remain_partitions", v.RemainPartitions),
 		d.Set("max_partitions", v.MaxPartitions),
@@ -170,18 +170,17 @@ func resourceDmsTopicsV1Read(_ context.Context, d *schema.ResourceData, meta int
 	return nil
 }
 
-func resourceDmsTopicsV1Delete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDmsTopicsV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*cfg.Config)
-	DmsV1Client, err := config.DmsV1Client(config.GetRegion(d))
+	DmsV2Client, err := common.ClientFromCtx(ctx, errCreationClientV2, func() (*golangsdk.ServiceClient, error) {
+		return config.DmsV2Client(config.GetRegion(d))
+	})
 	if err != nil {
-		return fmterr.Errorf(errCreationClient, err)
+		return fmterr.Errorf(errCreationClientV2, err)
 	}
-	deleteOpts := topics.DeleteOpts{
-		Topics: []string{
-			d.Id(),
-		},
-	}
-	_, err = topics.Delete(DmsV1Client, deleteOpts, d.Get("instance_id").(string)).Extract()
+
+	deleteOpts := []string{d.Id()}
+	_, err = topics.Delete(DmsV2Client, d.Get("instance_id").(string), deleteOpts)
 	if err != nil {
 		return fmterr.Errorf("error deleting OpenTelekomCloud topic: %s", err)
 	}

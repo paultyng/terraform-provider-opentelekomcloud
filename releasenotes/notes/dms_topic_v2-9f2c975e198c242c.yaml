@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    **[DMS]** Add new resource ``resource/opentelekomcloud_dms_topic_v2`` (`# <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/issues/>`_)
+deprecations:
+  - |
+    **[DMS]** ``resource/opentelekomcloud_dms_topic_v1`` is deprecated in favor of ``resource/opentelekomcloud_dms_topic_v2``
+    (`# <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/>`_)
