@@ -4,7 +4,7 @@ layout: "opentelekomcloud"
 page_title: "OpenTelekomCloud: opentelekomcloud_vpcep_approval_v1"
 sidebar_current: "docs-opentelekomcloud-resource-vpcep-approval-v1"
 description: |-
-Manages a VPCEP Endpoint resource within OpenTelekomCloud.
+  Manages a VPCEP Endpoint resource within OpenTelekomCloud.
 ---
 
 
