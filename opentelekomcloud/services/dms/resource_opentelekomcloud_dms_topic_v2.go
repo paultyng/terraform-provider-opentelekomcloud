@@ -2,7 +2,9 @@ package dms
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -21,7 +23,7 @@ func ResourceDmsTopicsV2() *schema.Resource {
 		ReadContext:   resourceDmsTopicsV2Read,
 		DeleteContext: resourceDmsTopicsV2Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceDmsTopicV2ImportState,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -188,4 +190,15 @@ func resourceDmsTopicsV2Delete(ctx context.Context, d *schema.ResourceData, meta
 	log.Printf("[DEBUG] Dms topic %s deactivated.", d.Id())
 	d.SetId("")
 	return nil
+}
+
+func resourceDmsTopicV2ImportState(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData,
+	error) {
+	parts := strings.SplitN(d.Id(), "/", 2)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid format for import ID, want '<instance_id>/<topic_name>', but '%s'", d.Id())
+	}
+
+	d.SetId(parts[1])
+	return []*schema.ResourceData{d}, d.Set("instance_id", parts[0])
 }

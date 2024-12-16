@@ -6,14 +6,52 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/dms/v2/topics"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/common"
+	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/env"
+	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/cfg"
 )
 
 const resourceTopicV2Name = "opentelekomcloud_dms_topic_v2.topic_1"
 
+func geDmsTopicFunc(config *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	client, err := config.DmsV2Client(env.OS_REGION_NAME)
+	if err != nil {
+		return nil, fmt.Errorf("error creating DMS v2 client: %s", err)
+	}
+	var fTopic topics.Topic
+
+	v, err := topics.List(client, state.Primary.Attributes["instance_id"])
+	if err != nil {
+		return nil, fmt.Errorf("provided topic doesn't exist")
+	}
+	found := false
+
+	for _, topic := range v.Topics {
+		if topic.Name == state.Primary.ID {
+			fTopic = topic
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("provided topic doesn't exist")
+	}
+
+	return fTopic, nil
+}
+
 func TestAccDmsTopicsV2_basic(t *testing.T) {
+	var instance topics.Topic
 	var instanceName = fmt.Sprintf("dms_instance_%s", acctest.RandString(5))
 	var topicName = fmt.Sprintf("topic_instance_%s", acctest.RandString(5))
+
+	rc := common.InitResourceCheck(
+		resourceTopicV2Name,
+		&instance,
+		geDmsTopicFunc,
+	)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
@@ -23,14 +61,35 @@ func TestAccDmsTopicsV2_basic(t *testing.T) {
 			{
 				Config: testAccDmsV2TopicBasic(instanceName, topicName),
 				Check: resource.ComposeTestCheckFunc(
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceTopicV2Name, "partition", "200"),
 					resource.TestCheckResourceAttr(resourceTopicV2Name, "replication", "3"),
 					resource.TestCheckResourceAttr(resourceTopicV2Name, "sync_replication", "true"),
 					resource.TestCheckResourceAttr(resourceTopicV2Name, "retention_time", "600"),
 				),
 			},
+			{
+				ResourceName:      resourceTopicV2Name,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: testAccDmsTopicImportStateFunc(resourceTopicV2Name),
+			},
 		},
 	})
+}
+
+func testAccDmsTopicImportStateFunc(rName string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[rName]
+		if !ok {
+			return "", fmt.Errorf("resource (%s) not found: %s", rName, rs)
+		}
+		if rs.Primary.Attributes["instance_id"] == "" {
+			return "", fmt.Errorf("invalid format specified for import ID, want '<instance_id>/<name>', but '%s/%s'",
+				rs.Primary.Attributes["instance_id"], rs.Primary.ID)
+		}
+		return fmt.Sprintf("%s/%s", rs.Primary.Attributes["instance_id"], rs.Primary.ID), nil
+	}
 }
 
 func testAccDmsV2TopicBasic(instanceName string, topicName string) string {

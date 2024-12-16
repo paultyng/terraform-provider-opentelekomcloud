@@ -66,26 +66,26 @@ resource "opentelekomcloud_dms_topic_v2" "topic_1" {
 
 The following arguments are supported:
 
-* `instance_id` - (Required) Indicates the ID of primary DMS instance.
+* `instance_id` - (Required, String, ForceNew) Indicates the ID of primary DMS instance.
 
-* `name` - (Required) Indicates the name of a topic.
+* `name` - (Required, String, ForceNew) Indicates the name of a topic.
 
-* `partition` - (Optional) Indicates the number of topic partitions,
+* `partition` - (Optional, Int, ForceNew) Indicates the number of topic partitions,
   which is used to set the number of concurrently consumed messages.
   Value range: `1–200`. Default value: `3`.
 
-* `replication` - (Optional) Indicates the number of replicas,
+* `replication` - (Optional, Int, ForceNew) Indicates the number of replicas,
   which is configured to ensure data reliability.
   Value range: `1–3`. Default value: `3`.
 
-* `sync_replication` - (Optional) Indicates whether to enable synchronous replication.
+* `sync_replication` - (Optional, Bool, ForceNew) Indicates whether to enable synchronous replication.
   After this function is enabled, the `acks` parameter on the producer client must be set to `–1`.
   Otherwise, this parameter does not take effect.
 
-* `retention_time` - (Required) Indicates the retention period of a message. Its default value is `72`.
+* `retention_time` - (Optional, Int, ForceNew) Indicates the retention period of a message. Its default value is `72`.
   Value range: `1–720`. Default value: `72`. Unit: `hour`.
 
-* `sync_message_flush` - (Optional) Indicates whether to enable synchronous flushing.
+* `sync_message_flush` - (Optional, Bool, ForceNew) Indicates whether to enable synchronous flushing.
   Default value: `false`. Synchronous flushing compromises performance.
 
 
@@ -98,3 +98,11 @@ All above argument parameters can be exported as attribute parameters along with
 * `remain_partitions` - Number of remaining partitions.
 
 * `max_partitions` - Total partitions number.
+
+## Import
+
+DMS topics can be imported using their `topic_name` and related `instance_id`, separated by a slash, e.g.
+
+```bash
+$ terraform import opentelekomcloud_dms_topic_v2.test_topic <instance_id>/<topic_name>
+```

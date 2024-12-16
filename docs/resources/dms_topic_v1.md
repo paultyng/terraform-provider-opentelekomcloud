@@ -14,6 +14,9 @@ Up-to-date reference of API arguments for DMS topic you can get at
 
 Manages a DMS topic in the OpenTelekomCloud DMS Service (Kafka Premium/Platinum).
 
+~>
+Deprecated, use `opentelekomcloud_dms_topic_v2` resource instead
+
 ## Example Usage: creating dms instance with topic
 
 ```hcl
