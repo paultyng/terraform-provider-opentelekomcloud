@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    **[DCS]** Fix whitelist status code response for ``resource/opentelekomcloud_dcs_instance_v2`` (`#2767 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2767>`_)
