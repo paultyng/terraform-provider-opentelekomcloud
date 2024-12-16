@@ -10,6 +10,7 @@ const (
 	errCreationClient   = "error creating OpenTelekomCloud DMSv1 client: %w"
 	errCreationClientV2 = "error creating OpenTelekomCloud DMSv2 client: %w"
 	dmsClientV2         = "dms-v2-client"
+	dmsV1Deprecated     = "This resource API is deprecated. Please use opentelekomcloud_dms_topic_v2 instead."
 )
 
 func MarshalValue(i interface{}) string {
