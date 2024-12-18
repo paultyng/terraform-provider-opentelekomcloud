@@ -96,7 +96,7 @@ func dataSourceCceAddonTemplatesV3Read(_ context.Context, d *schema.ResourceData
 		return fmterr.Errorf(cceClientError, err)
 	}
 
-	addonTemplates, err := addons.GetTemplates(client).Extract()
+	addonTemplates, err := addons.GetTemplates(client)
 	if err != nil {
 		return fmterr.Errorf("unable to retrieve templates: %s", err)
 	}
@@ -141,7 +141,7 @@ func dataSourceCceAddonTemplatesV3Read(_ context.Context, d *schema.ResourceData
 
 	result := make([]map[string]interface{}, len(templates))
 	for i, item := range templates {
-		inputData := item.Input["basic"].(map[string]interface{})
+		inputData := item.Input.Basic
 		addon := map[string]interface{}{
 			"addon_version":   item.Version,
 			"cluster_ip":      inputData["cluster_ip"],

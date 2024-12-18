@@ -590,7 +590,7 @@ func resourceCCEClusterV3Read(ctx context.Context, d *schema.ResourceData, meta 
 		}
 		installedAddons := make([]string, len(instances.Items))
 		for i, instance := range instances.Items {
-			installedAddons[i] = instance.Metadata.ID
+			installedAddons[i] = instance.Metadata.Id
 		}
 		if err := d.Set("installed_addons", installedAddons); err != nil {
 			return fmterr.Errorf("error setting installed addons: %w", err)
@@ -844,7 +844,7 @@ func listInstalledAddons(d *schema.ResourceData, config *cfg.Config) (*addons.Ad
 	if err != nil {
 		return nil, fmt.Errorf("error creating CCE Addon client: %w", logHttpError(err))
 	}
-	return addons.ListAddonInstances(client, d.Id()).Extract()
+	return addons.ListAddonInstances(client, d.Id())
 }
 
 func waitForInstalledAddons(ctx context.Context, d *schema.ResourceData, config *cfg.Config) error {
@@ -875,12 +875,12 @@ func removeAddons(ctx context.Context, d *schema.ResourceData, config *cfg.Confi
 		return fmt.Errorf("error creating CCE Addon client: %w", logHttpError(err))
 	}
 
-	instances, err := addons.ListAddonInstances(client, d.Id()).Extract()
+	instances, err := addons.ListAddonInstances(client, d.Id())
 	if err != nil {
 		return fmt.Errorf("error listing cluster addons: %w", err)
 	}
 	for _, addon := range instances.Items {
-		addonID := addon.Metadata.ID
+		addonID := addon.Metadata.Id
 		stateConfAddonReady := &resource.StateChangeConf{
 			Pending:    []string{"installing"},
 			Target:     []string{"running", "available", "abnormal"},
@@ -895,8 +895,8 @@ func removeAddons(ctx context.Context, d *schema.ResourceData, config *cfg.Confi
 	}
 
 	for _, instance := range instances.Items {
-		addonID := instance.Metadata.ID
-		if err := addons.Delete(client, addonID, d.Id()).ExtractErr(); err != nil {
+		addonID := instance.Metadata.Id
+		if err := addons.Delete(client, addonID, d.Id()); err != nil {
 			return fmt.Errorf("error deleting cluster addon %s/%s: %w", d.Id(), addonID, err)
 		}
 	}
@@ -919,7 +919,7 @@ func removeAddons(ctx context.Context, d *schema.ResourceData, config *cfg.Confi
 
 func waitForCCEClusterAddonsState(client *golangsdk.ServiceClient, clusterID string) resource.StateRefreshFunc {
 	return func() (r interface{}, s string, err error) {
-		instances, err := addons.ListAddonInstances(client, clusterID).Extract()
+		instances, err := addons.ListAddonInstances(client, clusterID)
 		if err != nil {
 			return nil, "", fmt.Errorf("error listing cluster addons: %w", err)
 		}
@@ -932,7 +932,7 @@ func waitForCCEClusterAddonsState(client *golangsdk.ServiceClient, clusterID str
 
 func waitForCCEClusterAddonActive(client *golangsdk.ServiceClient, id, clusterID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		n, err := addons.Get(client, id, clusterID).Extract()
+		n, err := addons.Get(client, id, clusterID)
 		if err != nil {
 			return nil, "", err
 		}

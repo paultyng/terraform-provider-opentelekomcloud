@@ -129,7 +129,7 @@ func resourceCCEAddonV3Create(ctx context.Context, d *schema.ResourceData, meta 
 				Flavor:   flavor,
 			},
 		},
-	}, clusterID).Extract()
+	}, clusterID)
 
 	if err != nil {
 		errMsg := logHttpError(err)
@@ -171,7 +171,7 @@ func resourceCCEAddonV3Read(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	clusterID := d.Get("cluster_id").(string)
-	addon, err := addons.Get(client, d.Id(), clusterID).Extract()
+	addon, err := addons.Get(client, d.Id(), clusterID)
 	if err != nil {
 		if _, ok := err.(golangsdk.ErrDefault404); ok {
 			d.SetId("")
@@ -228,7 +228,7 @@ func resourceCCEAddonV3Delete(ctx context.Context, d *schema.ResourceData, meta 
 
 	clusterID := d.Get("cluster_id").(string)
 
-	if err := addons.Delete(client, d.Id(), clusterID).ExtractErr(); err != nil {
+	if err := addons.Delete(client, d.Id(), clusterID); err != nil {
 		return fmterr.Errorf("error deleting CCE addon : %w", err)
 	}
 
@@ -250,7 +250,7 @@ func resourceCCEAddonV3Delete(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func getAddonTemplateSpec(client *golangsdk.ServiceClient, clusterID, templateName string) (string, error) {
-	templates, err := addons.ListTemplates(client, clusterID, addons.ListOpts{Name: templateName}).Extract()
+	templates, err := addons.ListTemplates(client, clusterID, addons.ListOpts{Name: templateName})
 	if err != nil {
 		return "", err
 	}
@@ -300,7 +300,7 @@ func unStringMap(src map[string]interface{}) map[string]interface{} {
 
 func waitForCCEAddonDelete(client *golangsdk.ServiceClient, addonID, clusterID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		addon, err := addons.Get(client, addonID, clusterID).Extract()
+		addon, err := addons.Get(client, addonID, clusterID)
 		if err != nil {
 			if _, ok := err.(golangsdk.ErrDefault404); ok {
 				return addon, "deleted", nil
@@ -328,7 +328,7 @@ func resourceCCEAddonV3Import(_ context.Context, d *schema.ResourceData, meta in
 		return nil, fmt.Errorf("error creating CCE client: %w", logHttpError(err))
 	}
 
-	addon, err := addons.Get(client, d.Id(), clusterID).Extract()
+	addon, err := addons.Get(client, d.Id(), clusterID)
 	if err != nil {
 		if _, ok := err.(golangsdk.ErrDefault404); ok {
 			d.SetId("")
@@ -355,7 +355,7 @@ func resourceCCEAddonV3Import(_ context.Context, d *schema.ResourceData, meta in
 
 func waitForCCEAddonActive(cceAddonClient *golangsdk.ServiceClient, id, clusterID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		n, err := addons.Get(cceAddonClient, id, clusterID).Extract()
+		n, err := addons.Get(cceAddonClient, id, clusterID)
 		if err != nil {
 			return nil, "", err
 		}
