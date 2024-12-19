@@ -16,7 +16,22 @@ import (
 const resourceAddonName = "opentelekomcloud_cce_addon_v3.autoscaler"
 const resourceAddonNameDns = "opentelekomcloud_cce_addon_v3.coredns"
 
+func getCceAddonResourceFunc(cfg *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	client, err := cfg.CceV3AddonClient(env.OS_REGION_NAME)
+	if err != nil {
+		return nil, fmt.Errorf("error creating CCE v3 Addon Client: %s", err)
+	}
+	return addons.Get(client, state.Primary.ID, state.Primary.Attributes["cluster_id"])
+}
+
 func TestAccCCEAddonV3Basic(t *testing.T) {
+	var addon addons.Addon
+	rc := common.InitResourceCheck(
+		resourceAddonName,
+		&addon,
+		getCceAddonResourceFunc,
+	)
+
 	clusterName := randClusterName()
 	t.Parallel()
 	quotas.BookOne(t, quotas.CCEClusterQuota)
@@ -24,7 +39,7 @@ func TestAccCCEAddonV3Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEAddonV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEAddonV3Basic(clusterName),
@@ -40,23 +55,6 @@ func TestAccCCEAddonV3Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceAddonName, "values.0.custom.scaleDownDelayAfterDelete", "8"),
 				),
 			},
-		},
-	})
-}
-
-func TestAccCCEAddonV3ImportBasic(t *testing.T) {
-	t.Parallel()
-	clusterName := randClusterName()
-	quotas.BookOne(t, quotas.CCEClusterQuota)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { common.TestAccPreCheck(t) },
-		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEAddonV3Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCCEAddonV3Basic(clusterName),
-			},
 			{
 				ResourceName:      resourceAddonName,
 				ImportState:       true,
@@ -70,25 +68,13 @@ func TestAccCCEAddonV3ImportBasic(t *testing.T) {
 	})
 }
 
-func testAccCCEAddonV3ImportStateIdFunc() resource.ImportStateIdFunc {
-	return func(s *terraform.State) (string, error) {
-		var clusterID string
-		var addonID string
-		for _, rs := range s.RootModule().Resources {
-			if rs.Type == "opentelekomcloud_cce_cluster_v3" {
-				clusterID = rs.Primary.ID
-			} else if rs.Type == "opentelekomcloud_cce_addon_v3" {
-				addonID = rs.Primary.ID
-			}
-		}
-		if clusterID == "" || addonID == "" {
-			return "", fmt.Errorf("resource not found: %s/%s", clusterID, addonID)
-		}
-		return fmt.Sprintf("%s/%s", clusterID, addonID), nil
-	}
-}
-
 func TestAccCCEAddonV3ForceNewCCE(t *testing.T) {
+	var addon addons.Addon
+	rc := common.InitResourceCheck(
+		resourceAddonName,
+		&addon,
+		getCceAddonResourceFunc,
+	)
 	clusterName := randClusterName()
 	t.Parallel()
 	quotas.BookOne(t, quotas.CCEClusterQuota)
@@ -96,7 +82,7 @@ func TestAccCCEAddonV3ForceNewCCE(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEAddonV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEAddonV3Basic(clusterName),
@@ -117,6 +103,12 @@ func TestAccCCEAddonV3ForceNewCCE(t *testing.T) {
 }
 
 func TestAccCCEAddonV3CoreDNS(t *testing.T) {
+	var addon addons.Addon
+	rc := common.InitResourceCheck(
+		resourceAddonNameDns,
+		&addon,
+		getCceAddonResourceFunc,
+	)
 	clusterName := randClusterName()
 	t.Parallel()
 	quotas.BookOne(t, quotas.CCEClusterQuota)
@@ -124,7 +116,7 @@ func TestAccCCEAddonV3CoreDNS(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEAddonV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEAddonV3StubDomains(clusterName),
@@ -140,6 +132,12 @@ const flavorRef = "      {\n        \"description\": \"Has only one instance\",\
 const flavorRefUpdate = "      {\n        \"description\": \"Has only one instance\",\n        \"name\": \"Single\",\n        \"replicas\": 1,\n        \"resources\": [\n          {\n            \"limitsCpu\": \"8000m\",\n            \"limitsMem\": \"4Gi\",\n            \"name\": \"autoscaler\",\n            \"requestsCpu\": \"4000m\",\n            \"requestsMem\": \"2Gi\"\n          }\n        ]\n      }\n"
 
 func TestAccCCEAddonV3Flavor(t *testing.T) {
+	var addon addons.Addon
+	rc := common.InitResourceCheck(
+		resourceAddonName,
+		&addon,
+		getCceAddonResourceFunc,
+	)
 	clusterName := randClusterName()
 	t.Parallel()
 	quotas.BookOne(t, quotas.CCEClusterQuota)
@@ -147,7 +145,7 @@ func TestAccCCEAddonV3Flavor(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEAddonV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEAddonV3Flavor(clusterName),
@@ -167,25 +165,22 @@ func TestAccCCEAddonV3Flavor(t *testing.T) {
 	})
 }
 
-func testAccCheckCCEAddonV3Destroy(s *terraform.State) error {
-	config := common.TestAccProvider.Meta().(*cfg.Config)
-	client, err := config.CceV3Client(env.OS_REGION_NAME)
-	if err != nil {
-		return fmt.Errorf("error creating OpenTelekomCloud CCEv3 client: %w", err)
-	}
-
+func testAccCCEAddonV3ImportStateIdFunc() resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		var clusterID string
+		var addonID string
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "opentelekomcloud_cce_addon_v3" {
-			continue
+			if rs.Type == "opentelekomcloud_cce_cluster_v3" {
+				clusterID = rs.Primary.ID
+			} else if rs.Type == "opentelekomcloud_cce_addon_v3" {
+				addonID = rs.Primary.ID
+			}
 		}
-
-		_, err := addons.Get(client, rs.Primary.ID, rs.Primary.Attributes["cluster_id"]).Extract()
-		if err == nil {
-			return fmt.Errorf("addon still exists")
+		if clusterID == "" || addonID == "" {
+			return "", fmt.Errorf("resource not found: %s/%s", clusterID, addonID)
 		}
+		return fmt.Sprintf("%s/%s", clusterID, addonID), nil
 	}
-
-	return nil
 }
 
 func checkScaleDownForAutoscaler(name string, enabled bool) resource.TestCheckFunc {
@@ -205,7 +200,7 @@ func checkScaleDownForAutoscaler(name string, enabled bool) resource.TestCheckFu
 			return fmt.Errorf("error creating opentelekomcloud CCE client: %w", err)
 		}
 
-		found, err := addons.Get(client, rs.Primary.ID, rs.Primary.Attributes["cluster_id"]).Extract()
+		found, err := addons.Get(client, rs.Primary.ID, rs.Primary.Attributes["cluster_id"])
 		if err != nil {
 			return err
 		}
