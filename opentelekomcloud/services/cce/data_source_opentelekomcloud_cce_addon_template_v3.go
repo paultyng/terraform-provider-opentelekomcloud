@@ -63,7 +63,7 @@ func dataSourceCceAddonTemplateV3Read(_ context.Context, d *schema.ResourceData,
 		return fmterr.Errorf(cceClientError, err)
 	}
 
-	addonTemplates, err := addons.GetTemplates(client).Extract()
+	addonTemplates, err := addons.GetTemplates(client)
 	if err != nil {
 		return fmterr.Errorf("unable to retrieve templates: %s", err)
 	}
@@ -96,7 +96,7 @@ func dataSourceCceAddonTemplateV3Read(_ context.Context, d *schema.ResourceData,
 	log.Printf("[DEBUG] Retrieved Template using given filter: %s", template.Metadata.Id)
 	d.SetId(template.Metadata.Id)
 
-	inputData := result.Input["basic"].(map[string]interface{})
+	inputData := result.Input.Basic
 	mErr := multierror.Append(
 		d.Set("cluster_ip", inputData["cluster_ip"]),
 		d.Set("image_version", inputData["image_version"]),

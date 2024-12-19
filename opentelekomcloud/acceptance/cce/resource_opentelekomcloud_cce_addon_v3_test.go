@@ -16,7 +16,22 @@ import (
 const resourceAddonName = "opentelekomcloud_cce_addon_v3.autoscaler"
 const resourceAddonNameDns = "opentelekomcloud_cce_addon_v3.coredns"
 
+func getCceAddonResourceFunc(cfg *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	client, err := cfg.CceV3AddonClient(env.OS_REGION_NAME)
+	if err != nil {
+		return nil, fmt.Errorf("error creating CCE v3 Addon Client: %s", err)
+	}
+	return addons.Get(client, state.Primary.ID, state.Primary.Attributes["cluster_id"])
+}
+
 func TestAccCCEAddonV3Basic(t *testing.T) {
+	var addon addons.Addon
+	rc := common.InitResourceCheck(
+		resourceAddonName,
+		&addon,
+		getCceAddonResourceFunc,
+	)
+
 	clusterName := randClusterName()
 	t.Parallel()
 	quotas.BookOne(t, quotas.CCEClusterQuota)
@@ -24,7 +39,7 @@ func TestAccCCEAddonV3Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEAddonV3Destroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCCEAddonV3Basic(clusterName),
@@ -40,23 +55,6 @@ func TestAccCCEAddonV3Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceAddonName, "values.0.custom.scaleDownDelayAfterDelete", "8"),
 				),
 			},
-		},
-	})
-}
-
-func TestAccCCEAddonV3ImportBasic(t *testing.T) {
-	t.Parallel()
-	clusterName := randClusterName()
-	quotas.BookOne(t, quotas.CCEClusterQuota)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { common.TestAccPreCheck(t) },
-		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEAddonV3Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCCEAddonV3Basic(clusterName),
-			},
 			{
 				ResourceName:      resourceAddonName,
 				ImportState:       true,
@@ -65,6 +63,103 @@ func TestAccCCEAddonV3ImportBasic(t *testing.T) {
 				ImportStateVerifyIgnore: []string{
 					"values",
 				},
+			},
+		},
+	})
+}
+
+func TestAccCCEAddonV3ForceNewCCE(t *testing.T) {
+	var addon addons.Addon
+	rc := common.InitResourceCheck(
+		resourceAddonName,
+		&addon,
+		getCceAddonResourceFunc,
+	)
+	clusterName := randClusterName()
+	t.Parallel()
+	quotas.BookOne(t, quotas.CCEClusterQuota)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { common.TestAccPreCheck(t) },
+		ProviderFactories: common.TestAccProviderFactories,
+		CheckDestroy:      rc.CheckResourceDestroy(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCCEAddonV3Basic(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					checkScaleDownForAutoscaler(resourceAddonName, true),
+					resource.TestCheckResourceAttr(resourceAddonName, "values.0.custom.scaleDownDelayAfterDelete", "11"),
+				),
+			},
+			{
+				Config: testAccCCEAddonV3ForceNew(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					checkScaleDownForAutoscaler(resourceAddonName, true),
+					resource.TestCheckResourceAttr(resourceAddonName, "values.0.custom.scaleDownDelayAfterDelete", "11"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccCCEAddonV3CoreDNS(t *testing.T) {
+	var addon addons.Addon
+	rc := common.InitResourceCheck(
+		resourceAddonNameDns,
+		&addon,
+		getCceAddonResourceFunc,
+	)
+	clusterName := randClusterName()
+	t.Parallel()
+	quotas.BookOne(t, quotas.CCEClusterQuota)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { common.TestAccPreCheck(t) },
+		ProviderFactories: common.TestAccProviderFactories,
+		CheckDestroy:      rc.CheckResourceDestroy(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCCEAddonV3StubDomains(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddonNameDns, "template_name", "coredns"),
+				),
+			},
+		},
+	})
+}
+
+const flavorRef = "      {\n        \"description\": \"Has only one instance\",\n        \"name\": \"Single\",\n        \"replicas\": 1,\n        \"resources\": [\n          {\n            \"limitsCpu\": \"1000m\",\n            \"limitsMem\": \"1000Mi\",\n            \"name\": \"autoscaler\",\n            \"requestsCpu\": \"500m\",\n            \"requestsMem\": \"500Mi\"\n          }\n        ]\n      }\n"
+const flavorRefUpdate = "      {\n        \"description\": \"Has only one instance\",\n        \"name\": \"Single\",\n        \"replicas\": 1,\n        \"resources\": [\n          {\n            \"limitsCpu\": \"8000m\",\n            \"limitsMem\": \"4Gi\",\n            \"name\": \"autoscaler\",\n            \"requestsCpu\": \"4000m\",\n            \"requestsMem\": \"2Gi\"\n          }\n        ]\n      }\n"
+
+func TestAccCCEAddonV3Flavor(t *testing.T) {
+	var addon addons.Addon
+	rc := common.InitResourceCheck(
+		resourceAddonName,
+		&addon,
+		getCceAddonResourceFunc,
+	)
+	clusterName := randClusterName()
+	t.Parallel()
+	quotas.BookOne(t, quotas.CCEClusterQuota)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { common.TestAccPreCheck(t) },
+		ProviderFactories: common.TestAccProviderFactories,
+		CheckDestroy:      rc.CheckResourceDestroy(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCCEAddonV3Flavor(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					checkScaleDownForAutoscaler(resourceAddonName, true),
+					resource.TestCheckResourceAttr(resourceAddonName, "values.0.flavor", flavorRef),
+				),
+			},
+			{
+				Config: testAccCCEAddonV3FlavorUpdate(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					checkScaleDownForAutoscaler(resourceAddonName, true),
+					resource.TestCheckResourceAttr(resourceAddonName, "values.0.flavor", flavorRefUpdate),
+				),
 			},
 		},
 	})
@@ -88,106 +183,6 @@ func testAccCCEAddonV3ImportStateIdFunc() resource.ImportStateIdFunc {
 	}
 }
 
-func TestAccCCEAddonV3ForceNewCCE(t *testing.T) {
-	clusterName := randClusterName()
-	t.Parallel()
-	quotas.BookOne(t, quotas.CCEClusterQuota)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { common.TestAccPreCheck(t) },
-		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEAddonV3Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCCEAddonV3Basic(clusterName),
-				Check: resource.ComposeTestCheckFunc(
-					checkScaleDownForAutoscaler(resourceAddonName, true),
-					resource.TestCheckResourceAttr(resourceAddonName, "values.0.custom.scaleDownDelayAfterDelete", "11"),
-				),
-			},
-			{
-				Config: testAccCCEAddonV3ForceNew(clusterName),
-				Check: resource.ComposeTestCheckFunc(
-					checkScaleDownForAutoscaler(resourceAddonName, true),
-					resource.TestCheckResourceAttr(resourceAddonName, "values.0.custom.scaleDownDelayAfterDelete", "11"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccCCEAddonV3CoreDNS(t *testing.T) {
-	clusterName := randClusterName()
-	t.Parallel()
-	quotas.BookOne(t, quotas.CCEClusterQuota)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { common.TestAccPreCheck(t) },
-		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEAddonV3Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCCEAddonV3StubDomains(clusterName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceAddonNameDns, "template_name", "coredns"),
-				),
-			},
-		},
-	})
-}
-
-const flavorRef = "      {\n        \"description\": \"Has only one instance\",\n        \"name\": \"Single\",\n        \"replicas\": 1,\n        \"resources\": [\n          {\n            \"limitsCpu\": \"1000m\",\n            \"limitsMem\": \"1000Mi\",\n            \"name\": \"autoscaler\",\n            \"requestsCpu\": \"500m\",\n            \"requestsMem\": \"500Mi\"\n          }\n        ]\n      }\n"
-const flavorRefUpdate = "      {\n        \"description\": \"Has only one instance\",\n        \"name\": \"Single\",\n        \"replicas\": 1,\n        \"resources\": [\n          {\n            \"limitsCpu\": \"8000m\",\n            \"limitsMem\": \"4Gi\",\n            \"name\": \"autoscaler\",\n            \"requestsCpu\": \"4000m\",\n            \"requestsMem\": \"2Gi\"\n          }\n        ]\n      }\n"
-
-func TestAccCCEAddonV3Flavor(t *testing.T) {
-	clusterName := randClusterName()
-	t.Parallel()
-	quotas.BookOne(t, quotas.CCEClusterQuota)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { common.TestAccPreCheck(t) },
-		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckCCEAddonV3Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCCEAddonV3Flavor(clusterName),
-				Check: resource.ComposeTestCheckFunc(
-					checkScaleDownForAutoscaler(resourceAddonName, true),
-					resource.TestCheckResourceAttr(resourceAddonName, "values.0.flavor", flavorRef),
-				),
-			},
-			{
-				Config: testAccCCEAddonV3FlavorUpdate(clusterName),
-				Check: resource.ComposeTestCheckFunc(
-					checkScaleDownForAutoscaler(resourceAddonName, true),
-					resource.TestCheckResourceAttr(resourceAddonName, "values.0.flavor", flavorRefUpdate),
-				),
-			},
-		},
-	})
-}
-
-func testAccCheckCCEAddonV3Destroy(s *terraform.State) error {
-	config := common.TestAccProvider.Meta().(*cfg.Config)
-	client, err := config.CceV3Client(env.OS_REGION_NAME)
-	if err != nil {
-		return fmt.Errorf("error creating OpenTelekomCloud CCEv3 client: %w", err)
-	}
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "opentelekomcloud_cce_addon_v3" {
-			continue
-		}
-
-		_, err := addons.Get(client, rs.Primary.ID, rs.Primary.Attributes["cluster_id"]).Extract()
-		if err == nil {
-			return fmt.Errorf("addon still exists")
-		}
-	}
-
-	return nil
-}
-
 func checkScaleDownForAutoscaler(name string, enabled bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[name]
@@ -205,7 +200,7 @@ func checkScaleDownForAutoscaler(name string, enabled bool) resource.TestCheckFu
 			return fmt.Errorf("error creating opentelekomcloud CCE client: %w", err)
 		}
 
-		found, err := addons.Get(client, rs.Primary.ID, rs.Primary.Attributes["cluster_id"]).Extract()
+		found, err := addons.Get(client, rs.Primary.ID, rs.Primary.Attributes["cluster_id"])
 		if err != nil {
 			return err
 		}
@@ -233,21 +228,21 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.small"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.27"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
 }
 
 resource "opentelekomcloud_cce_addon_v3" "autoscaler" {
   template_name    = "autoscaler"
-  template_version = "1.27.53"
+  template_version = "1.29.17"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
       "cceEndpoint" : "https://cce.eu-de.otc.t-systems.com",
       "ecsEndpoint" : "https://ecs.eu-de.otc.t-systems.com",
-      "image_version" : "1.27.53",
+      "image_version" : "1.29.17",
       "region" : "eu-de",
       "swr_addr" : "100.125.7.25:20202",
       "swr_user" : "cce-addons"
@@ -306,21 +301,21 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.small"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.27"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
 }
 
 resource "opentelekomcloud_cce_addon_v3" "autoscaler" {
   template_name    = "autoscaler"
-  template_version = "1.27.53"
+  template_version = "1.29.17"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
       "cceEndpoint" : "https://cce.eu-de.otc.t-systems.com",
       "ecsEndpoint" : "https://ecs.eu-de.otc.t-systems.com",
-      "image_version" : "1.27.53",
+      "image_version" : "1.29.17",
       "region" : "eu-de",
       "swr_addr" : "100.125.7.25:20202",
       "swr_user" : "cce-addons"
@@ -379,21 +374,21 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.medium"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.19"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
 }
 
 resource "opentelekomcloud_cce_addon_v3" "autoscaler" {
   template_name    = "autoscaler"
-  template_version = "1.19.1"
+  template_version = "1.29.17"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
       "cceEndpoint" : "https://cce.eu-de.otc.t-systems.com",
       "ecsEndpoint" : "https://ecs.eu-de.otc.t-systems.com",
-      "image_version" : "1.19.1",
+      "image_version" : "1.29.17",
       "platform" : "linux-amd64",
       "region" : "eu-de",
       "swr_addr" : "100.125.7.25:20202",
@@ -448,7 +443,7 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.medium"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.23"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
   no_addons               = true
@@ -456,13 +451,15 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
 
 resource "opentelekomcloud_cce_addon_v3" "coredns" {
   template_name    = "coredns"
-  template_version = "1.28.4"
+  template_version = "1.29.4"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
+      "cluster_ip" : "10.247.3.10",
+      "image_version" : "1.29.4",
       "swr_addr" : "100.125.7.25:20202",
-      "swr_user" : "hwofficial"
+      "swr_user" : "cce-addons"
     }
     custom = {
       "stub_domains" : "{\"test\":[\"10.10.40.10\"], \"test2\":[\"10.10.40.20\"]}"
@@ -484,21 +481,21 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.small"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.27"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
 }
 
 resource "opentelekomcloud_cce_addon_v3" "autoscaler" {
   template_name    = "autoscaler"
-  template_version = "1.27.53"
+  template_version = "1.29.17"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
       "cceEndpoint" : "https://cce.eu-de.otc.t-systems.com",
       "ecsEndpoint" : "https://ecs.eu-de.otc.t-systems.com",
-      "image_version" : "1.27.53",
+      "image_version" : "1.29.17",
       "region" : "eu-de",
       "swr_addr" : "100.125.7.25:20202",
       "swr_user" : "cce-addons"
@@ -557,21 +554,21 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.small"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.27"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
 }
 
 resource "opentelekomcloud_cce_addon_v3" "autoscaler" {
   template_name    = "autoscaler"
-  template_version = "1.27.53"
+  template_version = "1.29.17"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
       "cceEndpoint" : "https://cce.eu-de.otc.t-systems.com",
       "ecsEndpoint" : "https://ecs.eu-de.otc.t-systems.com",
-      "image_version" : "1.27.53",
+      "image_version" : "1.29.17",
       "region" : "eu-de",
       "swr_addr" : "100.125.7.25:20202",
       "swr_user" : "cce-addons"
