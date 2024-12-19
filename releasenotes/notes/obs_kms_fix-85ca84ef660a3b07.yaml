@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    **[OBS]** Fix encryption disable for ``resource/opentelekomcloud_obs_bucket`` (`#2771 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2771>`_)
