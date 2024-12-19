@@ -456,8 +456,8 @@ resource "opentelekomcloud_cce_addon_v3" "coredns" {
 
   values {
     basic = {
-      "cluster_ip": "10.247.3.10",
-      "image_version": "1.29.4",
+      "cluster_ip" : "10.247.3.10",
+      "image_version" : "1.29.4",
       "swr_addr" : "100.125.7.25:20202",
       "swr_user" : "cce-addons"
     }
