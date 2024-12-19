@@ -17,10 +17,10 @@ import (
 
 func ResourceCssSnapshotConfigurationV1() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: createResourceCssSnapshotConfigurationV1,
-		ReadContext:   readResourceCssSnapshotConfigurationV1,
-		UpdateContext: updateResourceCssSnapshotConfigurationV1,
-		DeleteContext: deleteResourceCssSnapshotConfigurationV1,
+		CreateContext: createCssSnapshotConfigurationV1,
+		ReadContext:   readCssSnapshotConfigurationV1,
+		UpdateContext: updateCssSnapshotConfigurationV1,
+		DeleteContext: deleteCssSnapshotConfigurationV1,
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(20 * time.Minute),
@@ -39,10 +39,11 @@ func ResourceCssSnapshotConfigurationV1() *schema.Resource {
 				ConflictsWith: []string{"configuration", "creation_policy"},
 			},
 			"configuration": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
-				MaxItems: 1,
+				Type:          schema.TypeList,
+				ConflictsWith: []string{"automatic"},
+				Optional:      true,
+				Computed:      true,
+				MaxItems:      1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"bucket": {
@@ -63,7 +64,6 @@ func ResourceCssSnapshotConfigurationV1() *schema.Resource {
 						},
 					},
 				},
-				ConflictsWith: []string{"automatic"},
 			},
 			"creation_policy": {
 				Type:          schema.TypeList,
@@ -100,16 +100,38 @@ func ResourceCssSnapshotConfigurationV1() *schema.Resource {
 	}
 }
 
-func createResourceCssSnapshotConfigurationV1(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func createCssSnapshotConfigurationV1(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	config := meta.(*cfg.Config)
+	client, err := config.CssV1Client(config.GetRegion(d))
+	if err != nil {
+		return fmterr.Errorf(clientError, err)
+	}
+
 	clusterID := d.Get("cluster_id").(string)
 	d.SetId(clusterID)
-	if err := updateSnapshotConfigurationResource(ctx, d, meta); err != nil {
-		return diag.FromErr(err)
+
+	if d.Get("automatic").(bool) {
+		if err := snapshots.Enable(client, d.Id()); err != nil {
+			return fmterr.Errorf("error using automatic config for snapshots: %w", err)
+		}
+		return nil
 	}
-	return readResourceCssSnapshotConfigurationV1(ctx, d, meta)
+
+	if d.Get("configuration.#") != 0 {
+		if err := updateSnapshotConfiguration(client, d); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.Get("creation_policy.#") != 0 {
+		if err := updateSnapshotPolicy(client, d); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	return readCssSnapshotConfigurationV1(ctx, d, meta)
 }
 
-func readResourceCssSnapshotConfigurationV1(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func readCssSnapshotConfigurationV1(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*cfg.Config)
 	client, err := config.CssV1Client(config.GetRegion(d))
 	if err != nil {
@@ -145,14 +167,34 @@ func readResourceCssSnapshotConfigurationV1(_ context.Context, d *schema.Resourc
 	return nil
 }
 
-func updateResourceCssSnapshotConfigurationV1(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if err := updateSnapshotConfigurationResource(ctx, d, meta); err != nil {
-		return diag.FromErr(err)
+func updateCssSnapshotConfigurationV1(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	config := meta.(*cfg.Config)
+	client, err := config.CssV1Client(config.GetRegion(d))
+	if err != nil {
+		return fmterr.Errorf(clientError, err)
 	}
-	return readResourceCssSnapshotConfigurationV1(ctx, d, meta)
+
+	if d.Get("automatic").(bool) {
+		if err := snapshots.Enable(client, d.Id()); err != nil {
+			return fmterr.Errorf("error using automatic config for snapshots: %w", err)
+		}
+		return nil
+	}
+	if d.HasChange("configuration") {
+		if err := updateSnapshotConfiguration(client, d); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("creation_policy") {
+		if err := updateSnapshotPolicy(client, d); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return readCssSnapshotConfigurationV1(ctx, d, meta)
 }
 
-func deleteResourceCssSnapshotConfigurationV1(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func deleteCssSnapshotConfigurationV1(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*cfg.Config)
 	client, err := config.CssV1Client(config.GetRegion(d))
 	if err != nil {
@@ -195,34 +237,5 @@ func updateSnapshotConfiguration(client *golangsdk.ServiceClient, d *schema.Reso
 	if err != nil {
 		return fmt.Errorf("error updating cluster automatic snapshot configuration: %w", err)
 	}
-	return nil
-}
-
-func updateSnapshotConfigurationResource(_ context.Context, d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*cfg.Config)
-	client, err := config.CssV1Client(config.GetRegion(d))
-	if err != nil {
-		return fmt.Errorf(clientError, err)
-	}
-
-	if d.Get("automatic").(bool) {
-		if err := snapshots.Enable(client, d.Id()); err != nil {
-			return fmt.Errorf("error using automatic config for snapshots: %w", err)
-		}
-		return nil
-	}
-
-	if d.Get("configuration.#") != 0 {
-		if err := updateSnapshotConfiguration(client, d); err != nil {
-			return err
-		}
-	}
-
-	if d.Get("creation_policy.#") != 0 {
-		if err := updateSnapshotPolicy(client, d); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
