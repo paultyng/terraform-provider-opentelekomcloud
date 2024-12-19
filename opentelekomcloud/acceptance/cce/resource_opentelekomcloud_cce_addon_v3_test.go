@@ -169,7 +169,7 @@ func testAccCCEAddonV3ImportStateIdFunc() resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
 		var clusterID string
 		var addonID string
-	for _, rs := range s.RootModule().Resources {
+		for _, rs := range s.RootModule().Resources {
 			if rs.Type == "opentelekomcloud_cce_cluster_v3" {
 				clusterID = rs.Primary.ID
 			} else if rs.Type == "opentelekomcloud_cce_addon_v3" {
@@ -228,21 +228,21 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.small"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.27"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
 }
 
 resource "opentelekomcloud_cce_addon_v3" "autoscaler" {
   template_name    = "autoscaler"
-  template_version = "1.27.53"
+  template_version = "1.29.17"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
       "cceEndpoint" : "https://cce.eu-de.otc.t-systems.com",
       "ecsEndpoint" : "https://ecs.eu-de.otc.t-systems.com",
-      "image_version" : "1.27.53",
+      "image_version" : "1.29.17",
       "region" : "eu-de",
       "swr_addr" : "100.125.7.25:20202",
       "swr_user" : "cce-addons"
@@ -301,21 +301,21 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.small"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.27"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
 }
 
 resource "opentelekomcloud_cce_addon_v3" "autoscaler" {
   template_name    = "autoscaler"
-  template_version = "1.27.53"
+  template_version = "1.29.17"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
       "cceEndpoint" : "https://cce.eu-de.otc.t-systems.com",
       "ecsEndpoint" : "https://ecs.eu-de.otc.t-systems.com",
-      "image_version" : "1.27.53",
+      "image_version" : "1.29.17",
       "region" : "eu-de",
       "swr_addr" : "100.125.7.25:20202",
       "swr_user" : "cce-addons"
@@ -374,21 +374,21 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.medium"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.19"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
 }
 
 resource "opentelekomcloud_cce_addon_v3" "autoscaler" {
   template_name    = "autoscaler"
-  template_version = "1.19.1"
+  template_version = "1.29.17"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
       "cceEndpoint" : "https://cce.eu-de.otc.t-systems.com",
       "ecsEndpoint" : "https://ecs.eu-de.otc.t-systems.com",
-      "image_version" : "1.19.1",
+      "image_version" : "1.29.17",
       "platform" : "linux-amd64",
       "region" : "eu-de",
       "swr_addr" : "100.125.7.25:20202",
@@ -443,7 +443,7 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.medium"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.23"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
   no_addons               = true
@@ -451,13 +451,15 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
 
 resource "opentelekomcloud_cce_addon_v3" "coredns" {
   template_name    = "coredns"
-  template_version = "1.28.4"
+  template_version = "1.29.4"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
+      "cluster_ip": "10.247.3.10",
+      "image_version": "1.29.4",
       "swr_addr" : "100.125.7.25:20202",
-      "swr_user" : "hwofficial"
+      "swr_user" : "cce-addons"
     }
     custom = {
       "stub_domains" : "{\"test\":[\"10.10.40.10\"], \"test2\":[\"10.10.40.20\"]}"
@@ -479,21 +481,21 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.small"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.27"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
 }
 
 resource "opentelekomcloud_cce_addon_v3" "autoscaler" {
   template_name    = "autoscaler"
-  template_version = "1.27.53"
+  template_version = "1.29.17"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
       "cceEndpoint" : "https://cce.eu-de.otc.t-systems.com",
       "ecsEndpoint" : "https://ecs.eu-de.otc.t-systems.com",
-      "image_version" : "1.27.53",
+      "image_version" : "1.29.17",
       "region" : "eu-de",
       "swr_addr" : "100.125.7.25:20202",
       "swr_user" : "cce-addons"
@@ -552,21 +554,21 @@ resource opentelekomcloud_cce_cluster_v3 cluster_1 {
   flavor_id               = "cce.s1.small"
   vpc_id                  = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   subnet_id               = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  cluster_version         = "v1.27"
+  cluster_version         = "v1.29"
   container_network_type  = "overlay_l2"
   kubernetes_svc_ip_range = "10.247.0.0/16"
 }
 
 resource "opentelekomcloud_cce_addon_v3" "autoscaler" {
   template_name    = "autoscaler"
-  template_version = "1.27.53"
+  template_version = "1.29.17"
   cluster_id       = opentelekomcloud_cce_cluster_v3.cluster_1.id
 
   values {
     basic = {
       "cceEndpoint" : "https://cce.eu-de.otc.t-systems.com",
       "ecsEndpoint" : "https://ecs.eu-de.otc.t-systems.com",
-      "image_version" : "1.27.53",
+      "image_version" : "1.29.17",
       "region" : "eu-de",
       "swr_addr" : "100.125.7.25:20202",
       "swr_user" : "cce-addons"
