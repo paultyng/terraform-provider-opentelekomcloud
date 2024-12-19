@@ -1424,7 +1424,11 @@ type WebsiteRoutingRule struct {
 }
 
 func resourceObsBucketEncryptionUpdate(client *obs.ObsClient, d *schema.ResourceData) error {
-	if d.Get("server_side_encryption.#") == 0 {
+	if d.Get("server_side_encryption.#") == 0 && !d.IsNewResource() {
+		_, err := client.DeleteBucketEncryption(d.Id())
+		if err != nil {
+			return fmt.Errorf("failed to disable default encryption of OBS bucket %s", d.Id())
+		}
 		return nil
 	}
 	_, err := client.SetBucketEncryption(&obs.SetBucketEncryptionInput{

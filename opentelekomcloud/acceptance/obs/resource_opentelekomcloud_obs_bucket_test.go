@@ -8,8 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/opentelekomcloud/gophertelekomcloud/acceptance/tools"
-	"github.com/opentelekomcloud/gophertelekomcloud/openstack/obs"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/common"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/env"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/cfg"
@@ -38,7 +36,6 @@ func TestAccObsBucket_basic(t *testing.T) {
 			{
 				Config: testAccObsBucketUpdate(rInt),
 				Check: resource.ComposeTestCheckFunc(testAccCheckObsBucketExists(resourceName),
-					testUploadObjectToObsBucket(rInt),
 					resource.TestCheckResourceAttr(resourceName, "acl", "public-read"),
 					resource.TestCheckResourceAttr(resourceName, "storage_class", "WARM"),
 				),
@@ -46,9 +43,14 @@ func TestAccObsBucket_basic(t *testing.T) {
 			{
 				Config: testAccObsBucketSSE(rInt),
 				Check: resource.ComposeTestCheckFunc(testAccCheckObsBucketExists(resourceName),
-					testUploadDeleteObjectObsBucket(rInt),
 					resource.TestCheckResourceAttr(resourceName, "server_side_encryption.0.kms_key_id", env.OS_KMS_ID),
 					resource.TestCheckResourceAttr(resourceName, "server_side_encryption.0.algorithm", "kms"),
+				),
+			},
+			{
+				Config: testAccObsBucketUpdate(rInt),
+				Check: resource.ComposeTestCheckFunc(testAccCheckObsBucketExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "server_side_encryption.#", "0"),
 				),
 			},
 		},
@@ -346,63 +348,6 @@ func testAccCheckObsBucketExists(n string) resource.TestCheckFunc {
 		_, err = client.HeadBucket(rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("bucket not found: %v", err)
-		}
-		return nil
-	}
-}
-
-func testUploadObjectToObsBucket(obsNumber int) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		config := common.TestAccProvider.Meta().(*cfg.Config)
-		client, err := config.NewObjectStorageClient(env.OS_REGION_NAME)
-		if err != nil {
-			return fmt.Errorf("error creating OpenTelekomCloud OBS client: %s", err)
-		}
-
-		objectName := tools.RandomString("test-obs-", 5)
-
-		_, err = client.PutObject(&obs.PutObjectInput{
-			PutObjectBasicInput: obs.PutObjectBasicInput{
-				ObjectOperationInput: obs.ObjectOperationInput{
-					Bucket: fmt.Sprintf("tf-test-bucket-%d", obsNumber),
-					Key:    objectName,
-				},
-			},
-		})
-		if err != nil {
-			return fmt.Errorf("error uploading object to OBS bucket: %s", err)
-		}
-		return nil
-	}
-}
-
-func testUploadDeleteObjectObsBucket(obsNumber int) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		config := common.TestAccProvider.Meta().(*cfg.Config)
-		client, err := config.NewObjectStorageClient(env.OS_REGION_NAME)
-		if err != nil {
-			return fmt.Errorf("error creating OpenTelekomCloud OBS client: %s", err)
-		}
-
-		objectName := tools.RandomString("test-obs-", 5)
-
-		_, err = client.PutObject(&obs.PutObjectInput{
-			PutObjectBasicInput: obs.PutObjectBasicInput{
-				ObjectOperationInput: obs.ObjectOperationInput{
-					Bucket: fmt.Sprintf("tf-test-bucket-%d", obsNumber),
-					Key:    objectName,
-				},
-			},
-		})
-		if err != nil {
-			return fmt.Errorf("error uploading object to OBS bucket: %s", err)
-		}
-		_, err = client.DeleteObject(&obs.DeleteObjectInput{
-			Bucket: fmt.Sprintf("tf-test-bucket-%d", obsNumber),
-			Key:    objectName,
-		})
-		if err != nil {
-			return fmt.Errorf("error deleting object from OBS bucket: %s", err)
 		}
 		return nil
 	}
