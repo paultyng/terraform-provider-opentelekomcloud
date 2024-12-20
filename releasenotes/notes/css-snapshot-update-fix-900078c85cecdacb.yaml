@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    **[CSS]** fixed ``creation_policy`` update when kms encryption enabled ``resource/opentelekomcloud_css_snapshot_configuration_v1``
+    (`#2772 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2772>`_)

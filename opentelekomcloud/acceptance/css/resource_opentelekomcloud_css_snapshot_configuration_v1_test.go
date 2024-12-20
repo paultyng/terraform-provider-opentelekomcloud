@@ -30,6 +30,7 @@ func TestResourceCSSSnapshotConfigurationV1_basic(t *testing.T) {
 				Config: testResourceCSSSnapshotConfigurationV1Basic(name, bucketBasePath),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "creation_policy.0.prefix", "snap"),
+					resource.TestCheckResourceAttr(resourceName, "creation_policy.0.period", "16:00 GMT+01:00"),
 					resource.TestCheckResourceAttr(resourceName, "configuration.0.base_path", bucketBasePath),
 				),
 			},
@@ -37,6 +38,7 @@ func TestResourceCSSSnapshotConfigurationV1_basic(t *testing.T) {
 				Config: testResourceCSSSnapshotConfigurationV1Updated(name, bucketBasePath),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "creation_policy.0.prefix", "snapshot"),
+					resource.TestCheckResourceAttr(resourceName, "creation_policy.0.period", "17:00 GMT+01:00"),
 					resource.TestCheckResourceAttr(resourceName, "creation_policy.0.keepday", "2"),
 				),
 			},
@@ -87,7 +89,7 @@ resource "opentelekomcloud_css_snapshot_configuration_v1" "config" {
   }
   creation_policy {
     prefix      = "snap"
-    period      = "00:00 GMT+03:00"
+    period      = "16:00 GMT+01:00"
     keepday     = 1
     enable      = true
     delete_auto = true
@@ -115,7 +117,7 @@ resource "opentelekomcloud_css_snapshot_configuration_v1" "config" {
   }
   creation_policy {
     prefix      = "snapshot"
-    period      = "00:00 GMT+03:00"
+    period      = "17:00 GMT+01:00"
     keepday     = 2
     enable      = true
     delete_auto = true
