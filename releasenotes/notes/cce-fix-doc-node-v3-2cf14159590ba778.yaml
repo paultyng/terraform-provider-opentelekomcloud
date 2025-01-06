@@ -1,0 +1,4 @@
+---
+doc:
+  - |
+    **[CCE]** Fixed doc for cce_node_v3 (`#2774 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2774>`_)
