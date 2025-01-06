@@ -67,10 +67,12 @@ The following arguments are supported:
 * `os` - (Optional, ForceNew, String) Node OS. Changing this parameter will create a new resource.
 
   Supported OS depends on kubernetes version of the cluster.
-  * Clusters of Kubernetes `v1.13` or later support `EulerOS 2.5`.
-  * Clusters of Kubernetes `v1.17` or later support `EulerOS 2.5` and `CentOS 7.7`.
-  * Clusters of Kubernetes `v1.21` or later support `EulerOS 2.5`, `EulerOS 2.9`, and `CentOS 7.7`.
-  * Clusters of Kubernetes `v1.25` or later support `EulerOS 2.5`, `EulerOS 2.9`, `CentOS 7.7` and `Ubuntu 22.04`.
+  | OS           | Kubernetes version |
+  | :----------- | :----------------- |
+  | HCE OS 2.0   | `v1.29`, `v1.28`, `v1.27`, `v1.25` |
+  | Ubuntu 22.04 | `v1.29`, `v1.28`, `v1.27`, `v1.25` |
+  | EulerOS release 2.9 | `v1.29`, `v1.28`, `v1.27`, `v1.25`, `v1.23`, `v1.21`, `V1.19` |
+  | EulerOS release 2.5 | `v1.25`, `v1.23`, `v1.21`, `V1.19` |
 
 * `billing_mode` - (Optional, ForceNew, Int) Node's billing mode: The value is `0` (on demand). Changing this parameter will create a new resource.
 
