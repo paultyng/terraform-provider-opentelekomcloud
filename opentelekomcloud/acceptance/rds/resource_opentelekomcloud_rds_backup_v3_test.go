@@ -16,9 +16,38 @@ import (
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/cfg"
 )
 
+func getBackupResourceFunc(conf *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	client, err := conf.RdsV3Client(env.OS_REGION_NAME)
+	if err != nil {
+		return nil, fmt.Errorf("error creating RDS v3 client: %s", err)
+	}
+
+	opts := backups.ListOpts{
+		InstanceID: state.Primary.Attributes["instance_id"],
+		BackupID:   state.Primary.ID,
+	}
+
+	backupList, err := backups.List(client, opts)
+
+	if err != nil {
+		return nil, fmt.Errorf("error listing backups: %s", err)
+	}
+
+	return backupList[0], nil
+}
+
 func TestAccResourceRDSV3Backup_basic(t *testing.T) {
-	resourceName := "opentelekomcloud_rds_backup_v3.test"
-	postfix := acctest.RandString(3)
+	var (
+		obj     backups.Backup
+		rName   = "opentelekomcloud_rds_backup_v3.test"
+		postfix = acctest.RandString(3)
+	)
+
+	rc := common.InitResourceCheck(
+		rName,
+		&obj,
+		getBackupResourceFunc,
+	)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
@@ -28,15 +57,40 @@ func TestAccResourceRDSV3Backup_basic(t *testing.T) {
 			{
 				Config: testAccResourceRDSV3BackupBasic(postfix),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckRdsBackupV3Exists(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "name", "tf_rds_backup_"+postfix),
-					resource.TestCheckResourceAttr(resourceName, "type", "manual"),
-					resource.TestCheckResourceAttr(resourceName, "description", ""),
-					resource.TestCheckResourceAttrSet(resourceName, "id"),
+					rc.CheckResourceExists(),
+					testAccCheckRdsBackupV3Exists(rName),
+					resource.TestCheckResourceAttr(rName, "name", "tf_rds_backup_"+postfix),
+					resource.TestCheckResourceAttr(rName, "type", "manual"),
+					resource.TestCheckResourceAttr(rName, "status", "COMPLETED"),
+					resource.TestCheckResourceAttrSet(rName, "id"),
 				),
+			},
+			{
+				ResourceName:      rName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: testAccBackupImportStateFunc(rName),
 			},
 		},
 	})
+}
+
+func testAccBackupImportStateFunc(rsName string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		var instanceId, backupId string
+		rs, ok := s.RootModule().Resources[rsName]
+		if !ok {
+			return "", fmt.Errorf("the resource (%s) of RDF backup is not found in the tfstate", rsName)
+		}
+		instanceId = rs.Primary.Attributes["instance_id"]
+		backupId = rs.Primary.ID
+		if instanceId == "" || backupId == "" {
+			return "", fmt.Errorf("some import IDs are missing: "+
+				"'<instance_id>/<id>', but got '%s/%s'",
+				instanceId, backupId)
+		}
+		return fmt.Sprintf("%s/%s", instanceId, backupId), nil
+	}
 }
 
 func testAccCheckRdsBackupV3Destroy(s *terraform.State) error {
@@ -123,7 +177,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "16"
     port     = "8635"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
@@ -134,10 +188,6 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
     size = 40
   }
   flavor = "rds.pg.c2.large"
-  backup_strategy {
-    start_time = "08:00-09:00"
-    keep_days  = 1
-  }
 }
 
 resource "opentelekomcloud_rds_backup_v3" "test" {
