@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    **[RDS]** Fix backup schema for ``resource/opentelekomcloud_rds_backup_v3`` (`#2777 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2777>`_)
