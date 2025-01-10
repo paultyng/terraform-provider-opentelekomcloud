@@ -65,35 +65,32 @@ func ResourceRdsInstanceV3() *schema.Resource {
 			"restore_point": {
 				Type:     schema.TypeList,
 				Optional: true,
-				ForceNew: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"instance_id": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: true,
 						},
 						"restore_time": {
 							Type:         schema.TypeInt,
 							Optional:     true,
 							ExactlyOneOf: []string{"restore_point.0.backup_id"},
-							ForceNew:     true,
 						},
 						"backup_id": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ExactlyOneOf: []string{"restore_point.0.restore_time"},
-							ForceNew:     true,
 						},
 					},
 				},
 			},
 			"restore_from_backup": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
-				Computed: false,
+				Type:       schema.TypeList,
+				Optional:   true,
+				MaxItems:   1,
+				Computed:   false,
+				Deprecated: "Use `restore_point` instead",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"source_instance_id": {
@@ -863,6 +860,41 @@ func resourceRdsInstanceV3Update(ctx context.Context, d *schema.ResourceData, me
 			if err != nil {
 				return fmterr.Errorf("error in point in time restoration: %s ", err)
 			}
+			if err := instances.WaitForStateAvailable(client, 1200, d.Id()); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	if d.HasChange("restore_point") {
+		rawPitr := d.Get("restore_point").([]interface{})
+		if len(rawPitr) > 0 {
+			pitr := rawPitr[0].(map[string]interface{})
+			pitrOpts := backups.RestorePITROpts{
+				Source: backups.Source{
+					BackupID:    pitr["backup_id"].(string),
+					InstanceID:  pitr["instance_id"].(string),
+					RestoreTime: int64(pitr["restore_time"].(int)),
+				},
+				Target: backups.Target{
+					InstanceID: d.Id(),
+				},
+			}
+			if pitrOpts.Source.BackupID != "" {
+				pitrOpts.Source.Type = "backup"
+			} else {
+				pitrOpts.Source.Type = "timestamp"
+			}
+
+			_, err = backups.RestorePITR(client, pitrOpts)
+			if err != nil {
+				return fmterr.Errorf("error in point in time restoration: %s ", err)
+			}
+
+			// Additional sleep is required to handle state transitions during PITR operations.
+			// During PITR application, the backend may undergo 2 sequential state changes instead of 1.
+			// Current waitForStateAvailable function terminates after detecting the first "Available" state.
+			time.Sleep(20 * time.Second)
 			if err := instances.WaitForStateAvailable(client, 1200, d.Id()); err != nil {
 				return diag.FromErr(err)
 			}

@@ -1,0 +1,10 @@
+---
+enhancements:
+  - |
+    **[RDS]** Updated ``restore_point`` argument of ``opentelekomcloud_rds_instance_v3`` resource allowing to
+    restore RDS instance backup to existing RDS instance
+    (`# <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/>`_)
+deprecations:
+  - |
+    **[RDS]** Parameter ``restore_from_backup`` is deprecated in favor of ``restore_point`` for ``resource/opentelekomcloud_rds_instance_v3``
+    (`# <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/>`_)
