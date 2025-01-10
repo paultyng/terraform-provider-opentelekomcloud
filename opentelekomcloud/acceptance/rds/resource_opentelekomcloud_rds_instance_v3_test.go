@@ -765,31 +765,6 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
 `, common.DataSourceSecGroupDefault, common.DataSourceSubnet, postfix, env.OS_AVAILABILITY_ZONE)
 }
 
-func testAccRdsInstanceV3InvalidFlavor(postfix string) string {
-	return fmt.Sprintf(`
-%s
-%s
-
-resource "opentelekomcloud_rds_instance_v3" "instance" {
-  name              = "tf_rds_instance_%s"
-  availability_zone = ["%s"]
-  db {
-    password = "Postgres!120521"
-    type     = "PostgreSQL"
-    version  = "15"
-  }
-  security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
-  subnet_id         = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  vpc_id            = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
-  volume {
-    type = "ULTRAHIGH"
-    size = 40
-  }
-  flavor = "bla.bla.rds"
-}
-`, common.DataSourceSecGroupDefault, common.DataSourceSubnet, postfix, env.OS_AVAILABILITY_ZONE)
-}
-
 func testAccRdsInstanceV3Restored(postfix string) string {
 	return fmt.Sprintf(`
 %s
