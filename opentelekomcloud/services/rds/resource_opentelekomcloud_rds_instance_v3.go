@@ -23,7 +23,6 @@ import (
 	tag "github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v1/tags"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/backups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/configurations"
-	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/flavors"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/security"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common"
@@ -48,7 +47,6 @@ func ResourceRdsInstanceV3() *schema.Resource {
 		},
 
 		CustomizeDiff: customdiff.All(
-			// validateRDSv3Flavor("flavor"),
 			common.ValidateSubnet("subnet_id"),
 			common.ValidateVPC("vpc_id"),
 		),
@@ -1390,46 +1388,6 @@ func resourceRdsInstanceV3Delete(ctx context.Context, d *schema.ResourceData, me
 
 	d.SetId("")
 	return nil
-}
-
-//nolint:all
-func validateRDSv3Flavor(argName string) schema.CustomizeDiffFunc {
-	return func(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
-		config, ok := meta.(*cfg.Config)
-		if !ok {
-			return fmt.Errorf("error retreiving configuration: can't convert %v to Config", meta)
-		}
-
-		client, err := config.RdsV3Client(config.GetRegion(d))
-		if err != nil {
-			return fmt.Errorf(errCreateClient, err)
-		}
-		dataStoreInfo := d.Get("db").([]interface{})[0].(map[string]interface{})
-		flavor := d.Get(argName).(string)
-
-		listOpts := flavors.ListOpts{
-			VersionName:  dataStoreInfo["version"].(string),
-			DatabaseName: dataStoreInfo["type"].(string),
-		}
-		flavorList, err := flavors.ListFlavors(client, listOpts)
-		if err != nil {
-			return fmt.Errorf("unable to get flavor pages: %w", err)
-		}
-
-		var matches = false
-		for _, flavorItem := range flavorList {
-			if flavorItem.SpecCode == flavor {
-				matches = true
-				break
-			}
-		}
-
-		if !matches {
-			return fmt.Errorf("can't find flavor `%s`", flavor)
-		}
-
-		return nil
-	}
 }
 
 func updateVolumeAutoExpand(ctx context.Context, d *schema.ResourceData, client *golangsdk.ServiceClient,

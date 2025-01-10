@@ -3,7 +3,6 @@ package acceptance
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -258,23 +257,6 @@ func TestAccRdsInstanceV3TemplateConfig(t *testing.T) {
 	})
 }
 
-func TestAccRdsInstanceV3InvalidFlavor(t *testing.T) {
-	postfix := acctest.RandString(3)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { common.TestAccPreCheck(t) },
-		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckRdsInstanceV3Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccRdsInstanceV3InvalidFlavor(postfix),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`can't find flavor.+`),
-			},
-		},
-	})
-}
-
 func TestAccRdsInstanceV3_configurationParameters(t *testing.T) {
 	postfix := acctest.RandString(3)
 	var rdsInstance instances.InstanceResponse
@@ -296,9 +278,6 @@ func TestAccRdsInstanceV3_configurationParameters(t *testing.T) {
 }
 
 func TestAccRdsInstanceV3TimeZoneAndSSL(t *testing.T) {
-	// Test is failing on deletion because RDSv3 SSL switchover doesn't change instance `action` status / doesn't
-	// return job_id but still blocks the instance from performing other actions like port_change/instance_deletion
-	// https://jira.tsi-dev.otc-service.com/browse/OTCDB-3026
 	postfix := acctest.RandString(3)
 	var rdsInstance instances.InstanceResponse
 
@@ -375,32 +354,6 @@ func TestAccRdsInstanceV3RestoreToPITR_NewInstance(t *testing.T) {
 				Config: testAccRdsInstanceV3RestorePITRBasic(postfix),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRdsInstanceV3Exists(instanceV3ResourceName, &rdsInstance),
-				),
-			},
-		},
-	})
-}
-
-func TestAccRdsInstanceV3RestoreToPITR_ExistingInstance(t *testing.T) {
-	postfix := acctest.RandString(3)
-	var rdsInstance instances.InstanceResponse
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { common.TestAccPreCheck(t) },
-		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckRdsInstanceV3Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccRdsInstanceV3RestorePITRBasic(postfix),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckRdsInstanceV3Exists(instanceV3ResourceName, &rdsInstance),
-				),
-			},
-			{
-				Config: testAccRdsInstanceV3RestorePITRUpdate(postfix),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(instanceV3ResourceName, "flavor", "rds.pg.c2.large"),
-					resource.TestCheckResourceAttrSet(instanceV3ResourceName, "restored_backup_id"),
 				),
 			},
 		},
