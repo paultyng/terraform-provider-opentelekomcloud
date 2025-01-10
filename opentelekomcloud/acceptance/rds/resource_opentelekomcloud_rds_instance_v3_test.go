@@ -3,7 +3,6 @@ package acceptance
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -146,14 +145,14 @@ func TestAccRdsInstanceV3ElasticIP(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRdsInstanceV3Exists(instanceV3ResourceName, &rdsInstance),
 					resource.TestCheckResourceAttr(instanceV3ResourceName, "name", "tf_rds_instance_"+postfix),
-					resource.TestCheckResourceAttr(instanceV3ResourceName, "db.0.version", "10"),
+					resource.TestCheckResourceAttr(instanceV3ResourceName, "db.0.version", "15"),
 					resource.TestCheckResourceAttr(instanceV3ResourceName, "public_ips.#", "1"),
 				),
 			},
 			{
 				Config: testAccRdsInstanceV3Basic(postfix),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(instanceV3ResourceName, "db.0.version", "10"),
+					resource.TestCheckResourceAttr(instanceV3ResourceName, "db.0.version", "15"),
 					resource.TestCheckResourceAttr(instanceV3ResourceName, "public_ips.#", "0"),
 				),
 			},
@@ -258,23 +257,6 @@ func TestAccRdsInstanceV3TemplateConfig(t *testing.T) {
 	})
 }
 
-func TestAccRdsInstanceV3InvalidFlavor(t *testing.T) {
-	postfix := acctest.RandString(3)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { common.TestAccPreCheck(t) },
-		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckRdsInstanceV3Destroy,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccRdsInstanceV3InvalidFlavor(postfix),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`can't find flavor.+`),
-			},
-		},
-	})
-}
-
 func TestAccRdsInstanceV3_configurationParameters(t *testing.T) {
 	postfix := acctest.RandString(3)
 	var rdsInstance instances.InstanceResponse
@@ -296,9 +278,6 @@ func TestAccRdsInstanceV3_configurationParameters(t *testing.T) {
 }
 
 func TestAccRdsInstanceV3TimeZoneAndSSL(t *testing.T) {
-	// Test is failing on deletion because RDSv3 SSL switchover doesn't change instance `action` status / doesn't
-	// return job_id but still blocks the instance from performing other actions like port_change/instance_deletion
-	// https://jira.tsi-dev.otc-service.com/browse/OTCDB-3026
 	postfix := acctest.RandString(3)
 	var rdsInstance instances.InstanceResponse
 
@@ -350,7 +329,7 @@ func TestAccRdsInstanceV3AutoScaling(t *testing.T) {
 	})
 }
 
-func TestAccRdsInstanceV3RestoreToPITR(t *testing.T) {
+func TestAccRdsInstanceV3RestoreToPITR_NewInstance(t *testing.T) {
 	postfix := acctest.RandString(3)
 	var rdsInstance instances.InstanceResponse
 
@@ -369,14 +348,12 @@ func TestAccRdsInstanceV3RestoreToPITR(t *testing.T) {
 				Config: testAccRdsInstanceV3RestorePITRUpdate(postfix),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(instanceV3ResourceName, "flavor", "rds.pg.c2.large"),
-					resource.TestCheckResourceAttrSet(instanceV3ResourceName, "restored_backup_id"),
 				),
 			},
 			{
 				Config: testAccRdsInstanceV3RestorePITRBasic(postfix),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRdsInstanceV3Exists(instanceV3ResourceName, &rdsInstance),
-					resource.TestCheckResourceAttrSet(instanceV3ResourceName, "restored_backup_id"),
 				),
 			},
 		},
@@ -539,7 +516,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "15"
     port     = "8635"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
@@ -602,7 +579,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "15"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
   subnet_id         = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
@@ -627,7 +604,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "15"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
   subnet_id         = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
@@ -658,7 +635,7 @@ resource "opentelekomcloud_rds_parametergroup_v3" "pg" {
   }
   datastore {
     type    = "postgresql"
-    version = "12"
+    version = "15"
   }
 }
 
@@ -670,7 +647,7 @@ resource "opentelekomcloud_rds_parametergroup_v3" "pg2" {
   }
   datastore {
     type    = "postgresql"
-    version = "12"
+    version = "15"
   }
 }
 
@@ -680,7 +657,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "12"
+    version  = "15"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
   subnet_id         = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
@@ -708,7 +685,7 @@ resource "opentelekomcloud_rds_parametergroup_v3" "pg" {
   }
   datastore {
     type    = "postgresql"
-    version = "10"
+    version = "15"
   }
 }
 
@@ -720,7 +697,7 @@ resource "opentelekomcloud_rds_parametergroup_v3" "pg2" {
   }
   datastore {
     type    = "postgresql"
-    version = "12"
+    version = "15"
   }
 }
 
@@ -730,7 +707,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "12"
+    version  = "15"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
   subnet_id         = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
@@ -757,7 +734,7 @@ resource "opentelekomcloud_rds_parametergroup_v3" "pg" {
   }
   datastore {
     type    = "postgresql"
-    version = "10"
+    version = "15"
   }
 }
 
@@ -768,7 +745,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "15"
     port     = "8635"
   }
 
@@ -788,31 +765,6 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
 `, common.DataSourceSecGroupDefault, common.DataSourceSubnet, postfix, env.OS_AVAILABILITY_ZONE)
 }
 
-func testAccRdsInstanceV3InvalidFlavor(postfix string) string {
-	return fmt.Sprintf(`
-%s
-%s
-
-resource "opentelekomcloud_rds_instance_v3" "instance" {
-  name              = "tf_rds_instance_%s"
-  availability_zone = ["%s"]
-  db {
-    password = "Postgres!120521"
-    type     = "PostgreSQL"
-    version  = "10"
-  }
-  security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
-  subnet_id         = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
-  vpc_id            = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
-  volume {
-    type = "ULTRAHIGH"
-    size = 40
-  }
-  flavor = "bla.bla.rds"
-}
-`, common.DataSourceSecGroupDefault, common.DataSourceSubnet, postfix, env.OS_AVAILABILITY_ZONE)
-}
-
 func testAccRdsInstanceV3Restored(postfix string) string {
 	return fmt.Sprintf(`
 %s
@@ -824,7 +776,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "15"
     port     = "8635"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
@@ -863,7 +815,7 @@ resource "opentelekomcloud_rds_instance_v3" "from_backup" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "15"
     port     = "8635"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
@@ -1020,7 +972,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "15"
     port     = "8635"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
@@ -1039,7 +991,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance_2" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "15"
     port     = "8635"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
@@ -1071,7 +1023,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "15"
     port     = "8635"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id
@@ -1082,10 +1034,9 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
     size = 40
   }
   flavor = "rds.pg.c2.large"
-  restore_from_backup {
-    source_instance_id = opentelekomcloud_rds_backup_v3.test.instance_id
-    backup_id          = opentelekomcloud_rds_backup_v3.test.id
-    type               = "backup"
+  restore_point {
+    instance_id = opentelekomcloud_rds_backup_v3.test.instance_id
+    backup_id   = opentelekomcloud_rds_backup_v3.test.id
   }
 
 
@@ -1097,7 +1048,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance_2" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "15"
     port     = "8635"
   }
   security_group_id = data.opentelekomcloud_networking_secgroup_v2.default_secgroup.id

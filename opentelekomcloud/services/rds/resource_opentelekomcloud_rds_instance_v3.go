@@ -23,7 +23,6 @@ import (
 	tag "github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v1/tags"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/backups"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/configurations"
-	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/flavors"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/instances"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/rds/v3/security"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common"
@@ -48,7 +47,6 @@ func ResourceRdsInstanceV3() *schema.Resource {
 		},
 
 		CustomizeDiff: customdiff.All(
-			// validateRDSv3Flavor("flavor"),
 			common.ValidateSubnet("subnet_id"),
 			common.ValidateVPC("vpc_id"),
 		),
@@ -65,35 +63,32 @@ func ResourceRdsInstanceV3() *schema.Resource {
 			"restore_point": {
 				Type:     schema.TypeList,
 				Optional: true,
-				ForceNew: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"instance_id": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: true,
 						},
 						"restore_time": {
 							Type:         schema.TypeInt,
 							Optional:     true,
 							ExactlyOneOf: []string{"restore_point.0.backup_id"},
-							ForceNew:     true,
 						},
 						"backup_id": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ExactlyOneOf: []string{"restore_point.0.restore_time"},
-							ForceNew:     true,
 						},
 					},
 				},
 			},
 			"restore_from_backup": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
-				Computed: false,
+				Type:       schema.TypeList,
+				Optional:   true,
+				MaxItems:   1,
+				Computed:   false,
+				Deprecated: "Use `restore_point` instead",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"source_instance_id": {
@@ -869,6 +864,41 @@ func resourceRdsInstanceV3Update(ctx context.Context, d *schema.ResourceData, me
 		}
 	}
 
+	if d.HasChange("restore_point") {
+		rawPitr := d.Get("restore_point").([]interface{})
+		if len(rawPitr) > 0 {
+			pitr := rawPitr[0].(map[string]interface{})
+			pitrOpts := backups.RestorePITROpts{
+				Source: backups.Source{
+					BackupID:    pitr["backup_id"].(string),
+					InstanceID:  pitr["instance_id"].(string),
+					RestoreTime: int64(pitr["restore_time"].(int)),
+				},
+				Target: backups.Target{
+					InstanceID: d.Id(),
+				},
+			}
+			if pitrOpts.Source.BackupID != "" {
+				pitrOpts.Source.Type = "backup"
+			} else {
+				pitrOpts.Source.Type = "timestamp"
+			}
+
+			_, err = backups.RestorePITR(client, pitrOpts)
+			if err != nil {
+				return fmterr.Errorf("error in point in time restoration: %s ", err)
+			}
+
+			// Additional sleep is required to handle state transitions during PITR operations.
+			// During PITR application, the backend may undergo 2 sequential state changes instead of 1.
+			// Current waitForStateAvailable function terminates after detecting the first "Available" state.
+			time.Sleep(20 * time.Second)
+			if err := instances.WaitForStateAvailable(client, 1200, d.Id()); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
 	if d.HasChange("security_group_id") {
 		updateOpts := security.SetSecurityGroupOpts{
 			InstanceId:      d.Id(),
@@ -1358,46 +1388,6 @@ func resourceRdsInstanceV3Delete(ctx context.Context, d *schema.ResourceData, me
 
 	d.SetId("")
 	return nil
-}
-
-//nolint:all
-func validateRDSv3Flavor(argName string) schema.CustomizeDiffFunc {
-	return func(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
-		config, ok := meta.(*cfg.Config)
-		if !ok {
-			return fmt.Errorf("error retreiving configuration: can't convert %v to Config", meta)
-		}
-
-		client, err := config.RdsV3Client(config.GetRegion(d))
-		if err != nil {
-			return fmt.Errorf(errCreateClient, err)
-		}
-		dataStoreInfo := d.Get("db").([]interface{})[0].(map[string]interface{})
-		flavor := d.Get(argName).(string)
-
-		listOpts := flavors.ListOpts{
-			VersionName:  dataStoreInfo["version"].(string),
-			DatabaseName: dataStoreInfo["type"].(string),
-		}
-		flavorList, err := flavors.ListFlavors(client, listOpts)
-		if err != nil {
-			return fmt.Errorf("unable to get flavor pages: %w", err)
-		}
-
-		var matches = false
-		for _, flavorItem := range flavorList {
-			if flavorItem.SpecCode == flavor {
-				matches = true
-				break
-			}
-		}
-
-		if !matches {
-			return fmt.Errorf("can't find flavor `%s`", flavor)
-		}
-
-		return nil
-	}
 }
 
 func updateVolumeAutoExpand(ctx context.Context, d *schema.ResourceData, client *golangsdk.ServiceClient,

@@ -374,11 +374,12 @@ The following arguments are supported:
 
 * `tags` - (Optional) Tags key/value pairs to associate with the instance.
 
-* `restore_point` - (Optional, ForceNew) Specifies the restoration information. By selecting this option a new RDS
-  instance will be created from separate instance backup. Structure is documented below.
+* `restore_point` - (Optional, ForceNew) Specifies the restoration information. By selecting this option you can either
+  create a new RDS instance or restore backup from existing one. Structure is documented below.
 
-* `restore_from_backup` - (Optional) Specifies whether to restore database to an instance described in current resource.
+* `restore_from_backup` **DEPRECATED**  - (Optional) Specifies whether to restore database to an instance described in current resource.
   Structure is documented below.
+  Please use alternative parameter `restore_point`.
 
 * `ssl_enable` - (Optional) Specifies whether SSL should be enabled for MySql instances.
 
