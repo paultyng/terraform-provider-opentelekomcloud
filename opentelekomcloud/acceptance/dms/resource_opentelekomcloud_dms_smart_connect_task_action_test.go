@@ -86,9 +86,9 @@ resource "opentelekomcloud_dms_smart_connect_task_v2" "test" {
 resource "opentelekomcloud_dms_smart_connect_task_action" "test" {
   depends_on = [opentelekomcloud_dms_smart_connect_task_v2.test]
 
-  instance_id      = opentelekomcloud_dms_dedicated_instance_v2.test.id
-  task_id        = opentelekomcloud_dms_smart_connect_task_v2.test.id
-  action = "pause"
+  instance_id = opentelekomcloud_dms_dedicated_instance_v2.test.id
+  task_id     = opentelekomcloud_dms_smart_connect_task_v2.test.id
+  action      = "pause"
 }
 `, testAccKafkaInstance_newFormat(rName), rName, env.OS_ACCESS_KEY, env.OS_SECRET_KEY)
 }
