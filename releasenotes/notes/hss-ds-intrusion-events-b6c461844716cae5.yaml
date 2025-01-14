@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    **New Data Resource:** ``opentelekomcloud_hss_intrusion_events_v5`` (`#2781 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2781>`_)
