@@ -452,6 +452,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_dms_dedicated_instance_v2":                 dms.ResourceDmsDedicatedInstanceV2(),
 			"opentelekomcloud_dms_smart_connect_v2":                      dms.ResourceDmsSmartConnectV2(),
 			"opentelekomcloud_dms_smart_connect_task_v2":                 dms.ResourceDmsSmartConnectTaskV2(),
+			"opentelekomcloud_dms_smart_connect_task_action":             dms.ResourceDmsSmartConnectTaskAction(),
 			"opentelekomcloud_dms_topic_v1":                              dms.ResourceDmsTopicsV1(),
 			"opentelekomcloud_dms_topic_v2":                              dms.ResourceDmsTopicsV2(),
 			"opentelekomcloud_dms_user_v2":                               dms.ResourceDmsUsersV2(),
