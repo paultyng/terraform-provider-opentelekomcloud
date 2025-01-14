@@ -1,8 +1,8 @@
 ---
 subcategory: "Distributed Message Service (DMS)"
 layout: "opentelekomcloud"
-page_title: "OpenTelekomCloud: opentelekomcloud_dms_smart_connect_task_action"
-sidebar_current: "docs-opentelekomcloud-resource-dms-smart-connect-task-action"
+page_title: "OpenTelekomCloud: opentelekomcloud_dms_smart_connect_task_action_v2"
+sidebar_current: "docs-opentelekomcloud-resource-dms-smart-connect-task-action-v2"
 description: |-
   Start or pause an up-to-date DMS Smart Connect Task v2 resource within OpenTelekomCloud.
 ---
@@ -10,7 +10,7 @@ description: |-
 Up-to-date reference of API arguments for DMS instance you can get at
 [documentation portal](https://docs.otc.t-systems.com/distributed-message-service/api-ref/apis_v2_recommended/smart_connect/index.html)
 
-# opentelekomcloud_dms_smart_connect_task_action
+# opentelekomcloud_dms_smart_connect_task_action_v2
 
 Start or pause a DMS kafka smart connect task resource within OpenTelekomCloud.
 
@@ -22,7 +22,7 @@ Start or pause a DMS kafka smart connect task resource within OpenTelekomCloud.
 variable "instance_id" {}
 variable "task_id" {}
 
-resource "opentelekomcloud_dms_smart_connect_task_action" "test" {
+resource "opentelekomcloud_dms_smart_connect_task_action_v2" "test" {
   instance_id = var.instance_id
   task_id     = var.task_id
   action      = "pause"
@@ -35,7 +35,7 @@ resource "opentelekomcloud_dms_smart_connect_task_action" "test" {
 variable "instance_id" {}
 variable "task_id" {}
 
-resource "opentelekomcloud_dms_smart_connect_task_action" "test" {
+resource "opentelekomcloud_dms_smart_connect_task_action_v2" "test" {
   instance_id = var.instance_id
   task_id     = var.task_id
   action      = "resume"
@@ -48,7 +48,7 @@ resource "opentelekomcloud_dms_smart_connect_task_action" "test" {
 variable "instance_id" {}
 variable "task_id" {}
 
-resource "opentelekomcloud_dms_smart_connect_task_action" "test" {
+resource "opentelekomcloud_dms_smart_connect_task_action_v2" "test" {
   instance_id = var.instance_id
   task_id     = var.task_id
   action      = "restart"

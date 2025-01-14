@@ -1,4 +1,4 @@
 ---
 features:
   - |
-    **[DMS]** Add new resource ``resource/opentelekomcloud_dms_smart_connect_task_action`` (`#2680 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2680>`_)
+    **[DMS]** Add new resource ``resource/opentelekomcloud_dms_smart_connect_task_action_v2`` (`#2680 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2680>`_)

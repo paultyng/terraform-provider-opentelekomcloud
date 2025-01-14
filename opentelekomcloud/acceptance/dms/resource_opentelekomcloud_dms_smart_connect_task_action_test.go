@@ -10,7 +10,7 @@ import (
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/env"
 )
 
-func TestAccDmsKafkav2SmartConnectTaskAction_basic(t *testing.T) {
+func TestAccDmsKafkav2SmartConnectTaskActionV2_basic(t *testing.T) {
 	var obj interface{}
 	rName := fmt.Sprintf("dms-acc-api%s", acctest.RandString(5))
 	resourceName := "opentelekomcloud_dms_smart_connect_task_v2.test"
@@ -83,7 +83,7 @@ resource "opentelekomcloud_dms_smart_connect_task_v2" "test" {
   }
 }
 
-resource "opentelekomcloud_dms_smart_connect_task_action" "test" {
+resource "opentelekomcloud_dms_smart_connect_task_action_v2" "test" {
   depends_on = [opentelekomcloud_dms_smart_connect_task_v2.test]
 
   instance_id = opentelekomcloud_dms_dedicated_instance_v2.test.id

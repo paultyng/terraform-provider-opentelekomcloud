@@ -15,7 +15,7 @@ import (
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/fmterr"
 )
 
-func ResourceDmsSmartConnectTaskAction() *schema.Resource {
+func ResourceDmsSmartConnectTaskActionV2() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDmsV2SmartConnectTaskActionCreate,
 		ReadContext:   resourceDmsV2SmartConnectTaskActionRead,
