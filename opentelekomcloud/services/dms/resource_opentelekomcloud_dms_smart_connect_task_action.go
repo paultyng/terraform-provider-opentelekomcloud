@@ -18,6 +18,8 @@ import (
 func ResourceDmsSmartConnectTaskAction() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDmsV2SmartConnectTaskActionCreate,
+		ReadContext:   resourceDmsV2SmartConnectTaskActionRead,
+		DeleteContext: resourceDmsV2SmartConnectTaskActionDelete,
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(30 * time.Minute),
@@ -87,6 +89,20 @@ func resourceDmsV2SmartConnectTaskActionCreate(ctx context.Context, d *schema.Re
 		return diag.Errorf("invalid action")
 	}
 
+	d.SetId(taskId)
+
+	return resourceDmsV2SmartConnectTaskActionRead(ctx, d, meta)
+}
+
+func resourceDmsV2SmartConnectTaskActionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	config := meta.(*cfg.Config)
+	client, err := common.ClientFromCtx(ctx, dmsClientV2, func() (*golangsdk.ServiceClient, error) {
+		return config.DmsV2Client(config.GetRegion(d))
+	})
+	if err != nil {
+		return fmterr.Errorf(errCreationClientV2, err)
+	}
+
 	getTask, err := smart_connect.GetTask(client, d.Get("instance_id").(string), d.Id())
 	if err != nil {
 		return common.CheckDeletedDiag(d, err, "error retrieving DMS kafka smart connect task")
@@ -94,8 +110,17 @@ func resourceDmsV2SmartConnectTaskActionCreate(ctx context.Context, d *schema.Re
 
 	mErr := multierror.Append(nil,
 		d.Set("region", config.GetRegion(d)),
-		d.Set("status", getTask.Status),
+		d.Set("task_status", getTask.Status),
 	)
 
 	return diag.FromErr(mErr.ErrorOrNil())
+}
+
+func resourceDmsV2SmartConnectTaskActionDelete(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	return diag.Diagnostics{
+		diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "Deleting action resource is not supported. The action resource is only removed from the state the task remains in the cloud.",
+		},
+	}
 }
