@@ -2,11 +2,15 @@ package acceptance
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/dns/v2/zones"
+	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/env"
+	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/cfg"
 
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/common"
 )
@@ -83,6 +87,30 @@ func TestAccOpenStackDNSZoneV2DataSource_private(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccCheckDNSV2ZoneDestroy(s *terraform.State) error {
+	config := common.TestAccProvider.Meta().(*cfg.Config)
+	client, err := config.DnsV2Client(env.OS_REGION_NAME)
+	if err != nil {
+		return fmt.Errorf("error creating OpenTelekomCloud DNS client: %s", err)
+	}
+	for _, rs := range s.RootModule().Resources {
+		if rs.Primary.Attributes["type"] == "public" && env.OS_REGION_NAME == "eu-nl" {
+			client.Endpoint = strings.Replace(client.Endpoint, "eu-nl", "eu-de", 1)
+			client.ResourceBase = strings.Replace(client.ResourceBase, "eu-nl", "eu-de", 1)
+		}
+		if rs.Type != "opentelekomcloud_dns_zone_v2" {
+			continue
+		}
+
+		_, err := zones.Get(client, rs.Primary.ID).Extract()
+		if err == nil {
+			return fmt.Errorf("zone still exists")
+		}
+	}
+
+	return nil
 }
 
 func testAccCheckDNSZoneV2DataSourceID(n string) resource.TestCheckFunc {
