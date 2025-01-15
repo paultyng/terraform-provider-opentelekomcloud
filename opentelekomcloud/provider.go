@@ -307,6 +307,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_hss_host_groups_v5":                hss.DataSourceHostGroups(),
 			"opentelekomcloud_hss_quotas_v5":                     hss.DataSourceQuotas(),
 			"opentelekomcloud_hss_hosts_v5":                      hss.DataSourceHosts(),
+			"opentelekomcloud_hss_intrusion_events_v5":           hss.DataSourceEvents(),
 			"opentelekomcloud_identity_agency_v3":                iam.DataSourceIdentityAgencyV3(),
 			"opentelekomcloud_identity_auth_scope_v3":            iam.DataSourceIdentityAuthScopeV3(),
 			"opentelekomcloud_identity_credential_v3":            iam.DataSourceIdentityCredentialV3(),
