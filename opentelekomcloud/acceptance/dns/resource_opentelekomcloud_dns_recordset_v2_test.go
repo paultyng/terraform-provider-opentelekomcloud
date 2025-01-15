@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/dns/v2/recordsets"
 
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/common"
@@ -25,19 +24,48 @@ func randomZoneName() string {
 	return fmt.Sprintf("acpttest-zone-%s.com.", acctest.RandString(5))
 }
 
+func getDnsRecordSetFunc(conf *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	c, err := conf.DnsV2Client(env.OS_REGION_NAME)
+	if err != nil {
+		return nil, fmt.Errorf("error creating OpenTelekomCloud DNS v2 client: %s", err)
+	}
+	zoneID, recordsetID, err := dns.ParseDNSV2RecordSetID(state.Primary.ID)
+	if err != nil {
+		return nil, err
+	}
+	rs, err := recordsets.Get(c, zoneID, recordsetID).Extract()
+	if err != nil {
+		if env.OS_REGION_NAME == "eu-nl" {
+			c.Endpoint = strings.Replace(c.Endpoint, "eu-nl", "eu-de", 1)
+			c.ResourceBase = strings.Replace(c.ResourceBase, "eu-nl", "eu-de", 1)
+			rs, err = recordsets.Get(c, zoneID, recordsetID).Extract()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return rs, err
+}
+
 func TestAccDNSV2RecordSet_basic(t *testing.T) {
 	var recordset recordsets.RecordSet
 	zoneName := randomZoneName()
 
+	rc := common.InitResourceCheck(
+		resourceRecordSetName,
+		&recordset,
+		getDnsRecordSetFunc,
+	)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2RecordSetDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2RecordSetBasic(zoneName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDNSV2RecordSetExists(resourceRecordSetName, &recordset),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceRecordSetName, "name", zoneName),
 					resource.TestCheckResourceAttr(resourceRecordSetName, "description", "a record set"),
 					resource.TestCheckResourceAttr(resourceRecordSetName, "type", "A"),
@@ -53,6 +81,11 @@ func TestAccDNSV2RecordSet_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceRecordSetName, "description", "an updated record set"),
 				),
 			},
+			{
+				ResourceName:      resourceRecordSetName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -60,10 +93,16 @@ func TestAccDNSV2RecordSet_basic(t *testing.T) {
 func TestAccDNSV2RecordSet_unDotted(t *testing.T) {
 	zoneName := randomZoneName()
 	zoneName = strings.TrimSuffix(zoneName, ".")
+	var recordset recordsets.RecordSet
+	rc := common.InitResourceCheck(
+		resourceRecordSetName,
+		&recordset,
+		getDnsRecordSetFunc,
+	)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2RecordSetDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2RecordSetBasic(zoneName),
@@ -75,10 +114,16 @@ func TestAccDNSV2RecordSet_unDotted(t *testing.T) {
 // TestAccDNSV2RecordSet_childFirst covers #847
 func TestAccDNSV2RecordSet_childFirst(t *testing.T) {
 	zoneName := randomZoneName()
+	var recordset recordsets.RecordSet
+	rc := common.InitResourceCheck(
+		resourceRecordSetName,
+		&recordset,
+		getDnsRecordSetFunc,
+	)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2RecordSetDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2RecordSetChildFirst1(zoneName),
@@ -93,16 +138,20 @@ func TestAccDNSV2RecordSet_childFirst(t *testing.T) {
 func TestAccDNSV2RecordSet_readTTL(t *testing.T) {
 	var recordset recordsets.RecordSet
 	zoneName := randomZoneName()
-
+	rc := common.InitResourceCheck(
+		resourceRecordSetName,
+		&recordset,
+		getDnsRecordSetFunc,
+	)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2RecordSetDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2RecordSetReadTTL(zoneName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDNSV2RecordSetExists(resourceRecordSetName, &recordset),
+					rc.CheckResourceExists(),
 					resource.TestMatchResourceAttr(resourceRecordSetName, "ttl", regexp.MustCompile("^[0-9]+$")),
 				),
 			},
@@ -113,16 +162,20 @@ func TestAccDNSV2RecordSet_readTTL(t *testing.T) {
 func TestAccDNSV2RecordSet_timeout(t *testing.T) {
 	var recordset recordsets.RecordSet
 	zoneName := randomZoneName()
-
+	rc := common.InitResourceCheck(
+		resourceRecordSetName,
+		&recordset,
+		getDnsRecordSetFunc,
+	)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2RecordSetDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2RecordSetTimeout(zoneName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDNSV2RecordSetExists(resourceRecordSetName, &recordset),
+					rc.CheckResourceExists(),
 				),
 			},
 		},
@@ -132,11 +185,16 @@ func TestAccDNSV2RecordSet_timeout(t *testing.T) {
 func TestAccDNSV2RecordSet_shared(t *testing.T) {
 	zoneName := randomZoneName()
 	resourceRecordSet2Name := "opentelekomcloud_dns_recordset_v2.recordset_2"
-
+	var recordset recordsets.RecordSet
+	rc := common.InitResourceCheck(
+		resourceRecordSetName,
+		&recordset,
+		getDnsRecordSetFunc,
+	)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2RecordSetDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2RecordSetBasic(zoneName),
@@ -161,16 +219,20 @@ func TestAccDNSV2RecordSet_shared(t *testing.T) {
 func TestAccDNSV2RecordSet_txt(t *testing.T) {
 	var recordset recordsets.RecordSet
 	zoneName := randomZoneName()
-
+	rc := common.InitResourceCheck(
+		resourceRecordSetName,
+		&recordset,
+		getDnsRecordSetFunc,
+	)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2RecordSetDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2RecordSetTxt(zoneName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDNSV2RecordSetExists(resourceRecordSetName, &recordset),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceRecordSetName, "name", zoneName),
 					resource.TestCheckResourceAttr(resourceRecordSetName, "description", "a record set"),
 					resource.TestCheckResourceAttr(resourceRecordSetName, "type", "TXT"),
@@ -188,69 +250,6 @@ func TestAccDNSV2RecordSet_txt(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckDNSV2RecordSetDestroy(s *terraform.State) error {
-	config := common.TestAccProvider.Meta().(*cfg.Config)
-	client, err := config.DnsV2Client(env.OS_REGION_NAME)
-	if err != nil {
-		return fmt.Errorf("error creating OpenTelekomCloud DNS client: %s", err)
-	}
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "opentelekomcloud_dns_recordset_v2" {
-			continue
-		}
-
-		zoneID, recordsetID, err := dns.ParseDNSV2RecordSetID(rs.Primary.ID)
-		if err != nil {
-			return err
-		}
-
-		_, err = recordsets.Get(client, zoneID, recordsetID).Extract()
-		if err == nil {
-			return fmt.Errorf("record set still exists")
-		}
-	}
-
-	return nil
-}
-
-func testAccCheckDNSV2RecordSetExists(n string, recordset *recordsets.RecordSet) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no ID is set")
-		}
-
-		config := common.TestAccProvider.Meta().(*cfg.Config)
-		client, err := config.DnsV2Client(env.OS_REGION_NAME)
-		if err != nil {
-			return fmt.Errorf("error creating OpenTelekomCloud DNS client: %s", err)
-		}
-
-		zoneID, recordsetID, err := dns.ParseDNSV2RecordSetID(rs.Primary.ID)
-		if err != nil {
-			return err
-		}
-
-		found, err := recordsets.Get(client, zoneID, recordsetID).Extract()
-		if err != nil {
-			return err
-		}
-
-		if found.ID != recordsetID {
-			return fmt.Errorf("record set not found")
-		}
-
-		*recordset = *found
-
-		return nil
-	}
 }
 
 func testAccDNSV2RecordSetBasic(zoneName string) string {

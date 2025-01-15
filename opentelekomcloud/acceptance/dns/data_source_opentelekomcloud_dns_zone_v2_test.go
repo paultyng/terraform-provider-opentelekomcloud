@@ -2,16 +2,11 @@ package acceptance
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/opentelekomcloud/gophertelekomcloud/openstack/dns/v2/zones"
-	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/env"
-	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/cfg"
-
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/common"
 )
 
@@ -20,11 +15,12 @@ const dataZoneName = "data.opentelekomcloud_dns_zone_v2.z1"
 func TestAccOpenStackDNSZoneV2DataSource_basic(t *testing.T) {
 	zone := randomZoneName()
 	randZoneTag := fmt.Sprintf("value-%s", acctest.RandString(5))
+	dc := common.InitDataSourceCheck(dataZoneName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheckRequiredEnvVars(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      dc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccOpenStackDNSZoneV2DataSourceZone(zone, randZoneTag),
@@ -32,6 +28,7 @@ func TestAccOpenStackDNSZoneV2DataSource_basic(t *testing.T) {
 			{
 				Config: testAccOpenStackDNSZoneV2DataSourceBasic(zone, randZoneTag),
 				Check: resource.ComposeTestCheckFunc(
+					dc.CheckResourceExists(),
 					testAccCheckDNSZoneV2DataSourceID(dataZoneName),
 					resource.TestCheckResourceAttr(dataZoneName, "name", zone),
 					resource.TestCheckResourceAttr(dataZoneName, "ttl", "3000"),
@@ -49,11 +46,12 @@ func TestAccOpenStackDNSZoneV2DataSource_byTag(t *testing.T) {
 	zone1 := randomZoneName()
 	zone2 := randomZoneName()
 	randZoneTag := fmt.Sprintf("value-%s", acctest.RandString(5))
+	dc := common.InitDataSourceCheck(dataZoneName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheckRequiredEnvVars(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      dc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccOpenStackDNSZoneV2DataSourceZone2(zone1, zone2, randZoneTag),
@@ -70,11 +68,12 @@ func TestAccOpenStackDNSZoneV2DataSource_byTag(t *testing.T) {
 
 func TestAccOpenStackDNSZoneV2DataSource_private(t *testing.T) {
 	zone1 := randomZoneName()
+	dc := common.InitDataSourceCheck(dataZoneName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheckRequiredEnvVars(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      dc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2ZonePrivate(zone1),
@@ -87,30 +86,6 @@ func TestAccOpenStackDNSZoneV2DataSource_private(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckDNSV2ZoneDestroy(s *terraform.State) error {
-	config := common.TestAccProvider.Meta().(*cfg.Config)
-	client, err := config.DnsV2Client(env.OS_REGION_NAME)
-	if err != nil {
-		return fmt.Errorf("error creating OpenTelekomCloud DNS client: %s", err)
-	}
-	for _, rs := range s.RootModule().Resources {
-		if rs.Primary.Attributes["type"] == "public" && env.OS_REGION_NAME == "eu-nl" {
-			client.Endpoint = strings.Replace(client.Endpoint, "eu-nl", "eu-de", 1)
-			client.ResourceBase = strings.Replace(client.ResourceBase, "eu-nl", "eu-de", 1)
-		}
-		if rs.Type != "opentelekomcloud_dns_zone_v2" {
-			continue
-		}
-
-		_, err := zones.Get(client, rs.Primary.ID).Extract()
-		if err == nil {
-			return fmt.Errorf("zone still exists")
-		}
-	}
-
-	return nil
 }
 
 func testAccCheckDNSZoneV2DataSourceID(n string) resource.TestCheckFunc {

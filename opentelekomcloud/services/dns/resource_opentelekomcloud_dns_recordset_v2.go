@@ -155,7 +155,17 @@ func resourceDNSRecordSetV2Create(ctx context.Context, d *schema.ResourceData, m
 	log.Printf("[DEBUG] Create Options: %#v", createOpts)
 	recordSet, err := recordsets.Create(client, zoneID, createOpts).Extract()
 	if err != nil {
-		return fmterr.Errorf("error creating OpenTelekomCloud DNS record set: %s", err)
+		// Check if the region is "eu-nl" and retry with "eu-de"
+		if config.GetRegion(d) == "eu-nl" {
+			replaceNlEndpoint(client)
+			// Retry the request after updating the endpoint
+			recordSet, err = recordsets.Create(client, zoneID, createOpts).Extract()
+			if err != nil {
+				return fmterr.Errorf("error creating OpenTelekomCloud DNS record set: %s", err)
+			}
+		} else {
+			return fmterr.Errorf("error creating OpenTelekomCloud DNS record set: %s", err)
+		}
 	}
 
 	log.Printf("[DEBUG] Waiting for DNS record set (%s) to become available", recordSet.ID)
@@ -215,7 +225,17 @@ func resourceDNSRecordSetV2Read(ctx context.Context, d *schema.ResourceData, met
 
 	n, err := recordsets.Get(client, zoneID, recordsetID).Extract()
 	if err != nil {
-		return common.CheckDeletedDiag(d, err, "record_set")
+		// Check if the region is "eu-nl" and retry with "eu-de"
+		if config.GetRegion(d) == "eu-nl" {
+			replaceNlEndpoint(client)
+			// Retry the request after updating the endpoint
+			n, err = recordsets.Get(client, zoneID, recordsetID).Extract()
+			if err != nil {
+				return common.CheckDeletedDiag(d, err, "record_set")
+			}
+		} else {
+			return common.CheckDeletedDiag(d, err, "record_set")
+		}
 	}
 
 	records := make([]string, len(n.Records))
@@ -303,7 +323,17 @@ func resourceDNSRecordSetV2Update(ctx context.Context, d *schema.ResourceData, m
 
 	_, err = recordsets.Update(client, zoneID, recordsetID, updateOpts).Extract()
 	if err != nil {
-		return fmterr.Errorf("error updating OpenTelekomCloud DNS  record set: %s", err)
+		// Check if the region is "eu-nl" and retry with "eu-de"
+		if config.GetRegion(d) == "eu-nl" {
+			replaceNlEndpoint(client)
+			// Retry the request after updating the endpoint
+			_, err = recordsets.Update(client, zoneID, recordsetID, updateOpts).Extract()
+			if err != nil {
+				return fmterr.Errorf("error updating OpenTelekomCloud DNS record set: %s", err)
+			}
+		} else {
+			return fmterr.Errorf("error updating OpenTelekomCloud DNS record set: %s", err)
+		}
 	}
 
 	log.Printf("[DEBUG] Waiting for DNS record set (%s) to update", recordsetID)
@@ -363,7 +393,17 @@ func resourceDNSRecordSetV2Delete(ctx context.Context, d *schema.ResourceData, m
 
 	err = recordsets.Delete(client, zoneID, recordsetID).ExtractErr()
 	if err != nil {
-		return fmterr.Errorf("error deleting OpenTelekomCloud DNS record set: %s", err)
+		// Check if the region is "eu-nl" and retry with "eu-de"
+		if config.GetRegion(d) == "eu-nl" {
+			replaceNlEndpoint(client)
+			// Retry the request after updating the endpoint
+			err = recordsets.Delete(client, zoneID, recordsetID).ExtractErr()
+			if err != nil {
+				return fmterr.Errorf("error deleting OpenTelekomCloud DNS record set: %s", err)
+			}
+		} else {
+			return fmterr.Errorf("error deleting OpenTelekomCloud DNS record set: %s", err)
+		}
 	}
 
 	log.Printf("[DEBUG] Waiting for DNS record set (%s) to be deleted", recordsetID)
@@ -456,7 +496,17 @@ func getExistingRecordSetID(d cfg.SchemaOrDiff, meta interface{}) (id string, er
 
 	allPages, err := recordsets.ListByZone(client, zoneID, listOpts).AllPages()
 	if err != nil {
-		return "", fmt.Errorf("error listing record sets: %s", err)
+		// Check if the region is "eu-nl" and retry with "eu-de"
+		if config.GetRegion(d) == "eu-nl" {
+			replaceNlEndpoint(client)
+			// Retry the request after updating the endpoint
+			allPages, err = recordsets.ListByZone(client, zoneID, listOpts).AllPages()
+			if err != nil {
+				return "", fmt.Errorf("error listing record sets: %s", err)
+			}
+		} else {
+			return "", fmt.Errorf("error listing record sets: %s", err)
+		}
 	}
 	sets, err := recordsets.ExtractRecordSets(allPages)
 	if err != nil {

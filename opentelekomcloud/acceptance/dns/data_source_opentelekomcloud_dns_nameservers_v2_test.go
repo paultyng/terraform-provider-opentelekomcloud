@@ -12,11 +12,12 @@ const dataDNSNameserverName = "data.opentelekomcloud_dns_nameservers_v2.nameserv
 
 func TestAccDNSV2NameserverDataSource_basic(t *testing.T) {
 	zoneName := randomZoneName()
+	dc := common.InitDataSourceCheck(dataZoneName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheckRequiredEnvVars(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      dc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2NameserverDataSource_nameserver(zoneName),
