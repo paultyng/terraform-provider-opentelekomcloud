@@ -182,8 +182,14 @@ The following arguments are supported:
 
 * `eni_subnet_cidr` - (Optional) Specifies the ENI network segment. Specified when creating a CCE Turbo cluster. Changing this parameter will create a new cluster resource.
 
-* `authentication_mode` - (Optional) Authentication mode of the cluster, possible values are `rbac` and `authenticating_proxy`.
-  Defaults to `rbac`. Changing this parameter will create a new cluster resource.
+* `authentication_mode` - (Optional) Cluster authentication mode.
+  * Clusters of Kubernetes v1.11 and earlier
+    Possible values: `x509`, `rbac`, and `authenticating_proxy`
+  * Clusters of Kubernetes v1.13 and later
+    Possible values: `rbac` and `authenticating_proxy`
+
+  Default value: `x509`
+  Changing this parameter will create a new cluster resource.
 
 * `authenticating_proxy_ca` - (Optional) CA root certificate provided in the `authenticating_proxy` mode.
   Deprecated, use `authenticating_proxy` instead.
