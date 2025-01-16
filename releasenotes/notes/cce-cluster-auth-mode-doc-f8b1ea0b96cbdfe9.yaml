@@ -1,0 +1,4 @@
+---
+other:
+  - |
+    **[CCE]** Update ``authentication_mode`` description in ``resource/opentelekomcloud_cce_cluster_v3`` documentation (`#2788 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2788>`_)
