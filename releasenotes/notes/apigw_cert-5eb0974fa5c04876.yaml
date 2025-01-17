@@ -1,0 +1,4 @@
+---
+features:
+  |
+  **[APIGW]** Add new resource ``resource/opentelekomcloud_apigw_certificate_v2`` (`#2791 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2791>`_)

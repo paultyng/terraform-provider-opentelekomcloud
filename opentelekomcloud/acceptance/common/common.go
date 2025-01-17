@@ -1,10 +1,17 @@
 package common
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
+	"math/big"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -206,4 +213,61 @@ func TestAccPreCheckKmsKeyID(t *testing.T) {
 	if env.OS_KMS_ID == "" {
 		t.Skip("OS_KMS_ID must be set for KMS key material acceptance tests.")
 	}
+}
+
+func GenerateRootCA(privateKeyPEM string) (string, error) {
+	block, _ := pem.Decode([]byte(privateKeyPEM))
+	if block == nil {
+		return "", fmt.Errorf("failed to parse PEM block")
+	}
+
+	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse private key: %v", err)
+	}
+
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Test CA"},
+			CommonName:   "Test Root CA",
+		},
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().AddDate(10, 0, 0),
+
+		KeyUsage: x509.KeyUsageCertSign |
+			x509.KeyUsageDigitalSignature |
+			x509.KeyUsageCRLSign,
+
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+		MaxPathLen:            0,
+
+		ExtKeyUsage: []x509.ExtKeyUsage{
+			x509.ExtKeyUsageClientAuth,
+			x509.ExtKeyUsageServerAuth,
+		},
+	}
+
+	derBytes, err := x509.CreateCertificate(
+		rand.Reader,
+		template,
+		template,
+		&priv.PublicKey,
+		priv,
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to create certificate: %v", err)
+	}
+
+	out := &bytes.Buffer{}
+	err = pem.Encode(out, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: derBytes,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to encode certificate: %v", err)
+	}
+
+	return out.String(), nil
 }
