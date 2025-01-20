@@ -424,6 +424,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_cts_tracker_v1":                            cts.ResourceCTSTrackerV1(),
 			"opentelekomcloud_cts_tracker_v3":                            cts.ResourceCTSTrackerV3(),
 			"opentelekomcloud_css_cluster_v1":                            css.ResourceCssClusterV1(),
+			"opentelekomcloud_css_configuration_v1":                      css.ResourceCssConfigurationV1(),
 			"opentelekomcloud_css_snapshot_configuration_v1":             css.ResourceCssSnapshotConfigurationV1(),
 			"opentelekomcloud_direct_connect_v2":                         dcaas.ResourceDirectConnectV2(),
 			"opentelekomcloud_dc_endpoint_group_v2":                      dcaas.ResourceDCEndpointGroupV2(),
