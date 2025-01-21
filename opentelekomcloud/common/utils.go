@@ -513,6 +513,13 @@ func ValueIgnoreEmpty(v interface{}) interface{} {
 	return v
 }
 
+// SetIfNotEmpty to set key if value is not empty
+func SetIfNotEmpty(target map[string]interface{}, key string, value interface{}) {
+	if value != nil && value != "" {
+		target[key] = value
+	}
+}
+
 // PathSearch evaluates a JMESPath expression against input data and returns the result.
 func PathSearch(expression string, obj interface{}, defaultValue interface{}) interface{} {
 	v, err := jmespath.Search(expression, obj)
