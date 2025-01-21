@@ -1,4 +1,4 @@
 ---
 enhancements:
   - |
-    **[DCS]** New resource ``resource/opentelekomcloud_css_configuration_v1`` (`#2792 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2792>`_)
+    **[CSS]** New resource ``resource/opentelekomcloud_css_configuration_v1`` (`#2792 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2792>`_)
