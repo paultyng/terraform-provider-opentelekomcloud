@@ -1,0 +1,4 @@
+---
+enhancements:
+  - |
+    **[CSS]** New resource ``resource/opentelekomcloud_css_cluster_restart_v1`` (`#2793 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2793>`_)
