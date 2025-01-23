@@ -30,4 +30,4 @@ data "opentelekomcloud_rds_versions_v3" "versions" {
 
 In addition, the following attributes are exported:
 
-* `versions` - List of version names, sorted by a version (higher to lower). Example: `["11", "10", "9.6", "9.5"]`.
+* `versions` - List of version names, sorted by a version (higher to lower). Example: `["16", "14", "14", "13"]`.

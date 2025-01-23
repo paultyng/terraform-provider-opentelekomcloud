@@ -100,7 +100,7 @@ func checkClusterOperationCompleted(client *golangsdk.ServiceClient, id string, 
 		if cluster.Status != "200" {
 			return false, nil
 		}
-		if cluster.Actions != nil && len(cluster.Actions) > 0 {
+		if len(cluster.Actions) > 0 {
 			return false, nil
 		}
 		if cluster.Instances == nil {

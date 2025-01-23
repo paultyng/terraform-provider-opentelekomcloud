@@ -1,0 +1,4 @@
+---
+other:
+  - |
+    **[RDS]** Various documentation updates for RDS resources and data sources (`#2798 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2798>`_)

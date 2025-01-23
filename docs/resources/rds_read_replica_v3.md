@@ -23,16 +23,16 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = var.db_password
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "16"
     port     = "8635"
   }
   security_group_id = var.sg_id
   subnet_id         = var.os_network_id
   vpc_id            = var.os_router_id
-  flavor            = "rds.pg.c2.medium"
+  flavor            = "rds.pg.n1.medium.4.rr"
 
   volume {
-    type = "ULTRAHIGH"
+    type = "CLOUDSSD"
     size = 40
   }
   backup_strategy {
@@ -53,7 +53,7 @@ resource "opentelekomcloud_rds_read_replica_v3" "replica" {
   availability_zone = var.az_replica
 
   volume {
-    type = "COMMON"
+    type = "CLOUDSSD"
   }
 }
 ```
@@ -90,6 +90,10 @@ The `volume` block supports:
   following and is case-sensitive.
     * `COMMON`: indicates the SATA type.
     * `ULTRAHIGH`: indicates the SSD type.
+    * `ESSD`: indicates the extreme SSD type.
+
+-> Note
+  The MySQL and PostgreSQL supports CLOUDSSD and ESSD, SQL Server supports only ESSD
 
 ## Attributes Reference
 
