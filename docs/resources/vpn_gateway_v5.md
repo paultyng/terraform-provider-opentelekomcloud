@@ -4,7 +4,7 @@ layout: "opentelekomcloud"
 page_title: "OpenTelekomCloud: opentelekomcloud_enterprise_vpn_gateway_v5"
 sidebar_current: "docs-opentelekomcloud-resource-enterprise-vpn-gateway-v5"
 description: |-
-Manages a Enterprise VPN Gateway Service resource within OpenTelekomCloud.
+  Manages a Enterprise VPN Gateway Service resource within OpenTelekomCloud.
 ---
 
 Up-to-date reference of API arguments for EVPN you can get at
