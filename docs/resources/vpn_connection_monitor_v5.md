@@ -4,7 +4,7 @@ layout: "opentelekomcloud"
 page_title: "OpenTelekomCloud: opentelekomcloud_enterprise_vpn_connection_monitor_v5"
 sidebar_current: "docs-opentelekomcloud-resource-enterprise-vpn-connection-monitor-v5"
 description: |-
-Manages a Enterprise VPN Connection Monitoring Service resource within OpenTelekomCloud.
+  Manages a Enterprise VPN Connection Monitoring Service resource within OpenTelekomCloud.
 ---
 
 Up-to-date reference of API arguments for EVPN connection monitor you can get at
