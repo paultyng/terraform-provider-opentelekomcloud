@@ -1,0 +1,4 @@
+---
+other:
+  - |
+    **[DOCS]** Fix documentation for ``docs/resources/vpn*`` (`#2797 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2797>`_)
