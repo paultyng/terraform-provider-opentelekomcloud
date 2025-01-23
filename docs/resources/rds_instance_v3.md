@@ -31,14 +31,14 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "P@ssw0rd1!9851"
     type     = "PostgreSQL"
-    version  = "9.5"
+    version  = "16"
     port     = "8635"
   }
 
   security_group_id = opentelekomcloud_networking_secgroup_v2.secgroup.id
   subnet_id         = var.subnet_id
   vpc_id            = var.vpc_id
-  flavor            = "rds.pg.c2.medium"
+  flavor            = "rds.pg.n1.large.4"
 
   volume {
     type = "CLOUDSSD"
@@ -72,13 +72,13 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "P@ssw0rd1!9851"
     type     = "PostgreSQL"
-    version  = "9.5"
+    version  = "16"
     port     = "8635"
   }
   security_group_id   = opentelekomcloud_networking_secgroup_v2.secgroup.id
   subnet_id           = var.subnet_id
   vpc_id              = var.vpc_id
-  flavor              = "rds.pg.s1.medium.ha"
+  flavor              = "rds.pg.x1.8xlarge.4.ha"
   ha_replication_mode = "async"
 
   volume {
@@ -116,7 +116,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Telekom!120521"
     type     = "PostgreSQL"
-    version  = "9.5"
+    version  = "16"
     port     = "8635"
   }
   name              = "terraform_test_rds_instance"
@@ -127,7 +127,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
     type = "CLOUDSSD"
     size = 100
   }
-  flavor              = "rds.pg.s1.medium.ha"
+  flavor              = "rds.pg.x1.8xlarge.4.ha"
   ha_replication_mode = "async"
   backup_strategy {
     start_time = "08:00-09:00"
@@ -164,12 +164,12 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   security_group_id = opentelekomcloud_networking_secgroup_v2.secgroup.id
   subnet_id         = var.subnet_id
   vpc_id            = var.vpc_id
-  flavor            = "rds.pg.c2.medium"
+  flavor            = "rds.pg.n1.xlarge.2"
 
   db {
     password = "P@ssw0rd1!9851"
     type     = "PostgreSQL"
-    version  = "9.5"
+    version  = "16"
     port     = "8635"
   }
 
@@ -199,7 +199,7 @@ resource "opentelekomcloud_rds_parametergroup_v3" "pg" {
   }
   datastore {
     type    = "postgresql"
-    version = "10"
+    version = "16"
   }
 }
 
@@ -210,14 +210,14 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "16"
     port     = "8635"
   }
 
   security_group_id = opentelekomcloud_networking_secgroup_v2.sg.id
   subnet_id         = var.subnet_id
   vpc_id            = var.vpc_id
-  flavor            = "rds.pg.c2.medium"
+  flavor            = "rds.pg.n1.xlarge.2"
   volume {
     type = "CLOUDSSD"
     size = 40
@@ -240,7 +240,7 @@ data "opentelekomcloud_rds_backup_v3" "backup" {
 resource "opentelekomcloud_rds_instance_v3" "from_backup" {
   name              = "instance-restored"
   availability_zone = opentelekomcloud_rds_instance_v3.instance.availability_zone
-  flavor            = "rds.pg.c2.medium"
+  flavor            = "rds.pg.n1.xlarge.2"
 
   restore_point {
     instance_id = data.opentelekomcloud_rds_backup_v3.backup.instance_id
@@ -250,7 +250,7 @@ resource "opentelekomcloud_rds_instance_v3" "from_backup" {
   db {
     password = "Postgres!120521"
     type     = "PostgreSQL"
-    version  = "10"
+    version  = "16"
     port     = "8635"
   }
   security_group_id = var.security_group_id
@@ -287,7 +287,7 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
     type = "CLOUDSSD"
     size = 40
   }
-  flavor = "rds.mysql.c2.medium"
+  flavor = "rds.mysql.s1.medium"
   backup_strategy {
     start_time = "08:00-09:00"
     keep_days  = 1
@@ -324,7 +324,7 @@ The following arguments are supported:
 
 * `flavor` - (Required) Specifies the specification code.
   Use data source [opentelekomcloud_rds_flavors_v3](../data-sources/rds_flavors_v3.md) to get a list of available flavor names.
-  Examples could be `rds.pg.c2.medium` or   `rds.pg.c2.medium.ha` for HA clusters.
+  Examples could be `rds.pg.n1.large.4` or `rds.pg.x1.8xlarge.4.ha` for HA clusters.
 
 * `name` - (Required, ForceNew) Specifies the DB instance name. The DB instance name of the same type
   must be unique for the same tenant. The value must be 4 to 64
@@ -347,8 +347,8 @@ The following arguments are supported:
   is async or semisync. For PostgreSQL, the value is async or sync. For Microsoft SQL Server, the value is sync.
   Parameter is required for HA clusters.
 
--> Async indicates the asynchronous replication mode. `semisync` indicates the
-  semi-synchronous replication mode. sync indicates the synchronous
+-> `async` indicates the asynchronous replication mode. `semisync` indicates the
+  semi-synchronous replication mode. `sync` indicates the synchronous
   replication mode.  Changing this parameter will create a new resource.
 
 * `param_group_id` - (Optional) Specifies the parameter group ID.
@@ -404,9 +404,10 @@ The `db` block supports:
 
 * `type` - (Required, ForceNew) Specifies the DB engine. Value: MySQL, PostgreSQL, SQLServer. Changing this parameter will create a new resource.
 
-* `version` - (Required, ForceNew) Specifies the database version. MySQL databases support MySQL 5.6
-  and above. PostgreSQL databases support PostgreSQL 9.5 and above. Microsoft SQL Server
-  databases support 2014 SE, 2016 SE, and above.
+* `version` - (Required, ForceNew) Specifies the database version.
+  * MySQL: 8.0, 5.7, and 5.6
+  * PostgreSQL: 11 through 16
+  * Microsoft SQL Server: 2017 (Enterprise/Standard) through 2022 (Enterprise/Standard)
   Changing this parameter will create a new resource.
 
 The `volume` block supports:

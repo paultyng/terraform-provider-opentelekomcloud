@@ -19,7 +19,7 @@ Use this data source to get available OpenTelekomCloud RDSv3 flavors.
 ```hcl
 data "opentelekomcloud_rds_flavors_v3" "flavor" {
   db_type       = "PostgreSQL"
-  db_version    = "9.5"
+  db_version    = "16"
   instance_mode = "ha"
 }
 ```
@@ -28,9 +28,10 @@ data "opentelekomcloud_rds_flavors_v3" "flavor" {
 
 * `db_type` - (Required) Specifies the DB engine. Possible values are: `MySQL`, `PostgreSQL`, `SQLServer`.
 
-* `db_version` - (Required) Specifies the database version. `MySQL` databases support `5.6`,
-  `5.7` and `8.0`. `PostgreSQL` databases support `9.5`, `9.6`, `10`, `11`, `12`  and `13`.
-  `SQLServer` databases support `2014_SE`, `2016_SE`, `2016_EE`, `2017_SE` and `2017_EE`.
+* `db_version` - (Required) Specifies the database version.
+  * MySQL: 8.0, 5.7, and 5.6
+  * PostgreSQL: 11 through 16
+  * Microsoft SQL Server: 2017 (Enterprise/Standard) through 2022 (Enterprise/Standard)
 
 * `instance_mode` - (Required) The mode of instance. Possible values are:
   `ha` indicates primary/standby instance, `single` indicates single instance

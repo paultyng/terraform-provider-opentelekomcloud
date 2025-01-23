@@ -22,8 +22,8 @@ Manages RDS instance v1 resource within OpenTelekomCloud.
 ```hcl
 data "opentelekomcloud_rds_flavors_v1" "flavor" {
   datastore_name    = "PostgreSQL"
-  datastore_version = "9.5.5"
-  speccode          = "rds.pg.s1.large.ha"
+  datastore_version = "16"
+  speccode          = "rds.pg.x1.xlarge.4"
 }
 
 resource "opentelekomcloud_compute_secgroup_v2" "secgrp_rds" {
@@ -37,12 +37,12 @@ resource "opentelekomcloud_rds_instance_v1" "instance" {
 
   datastore {
     type    = "PostgreSQL"
-    version = "9.5.5"
+    version = "16"
   }
 
   flavorref = data.opentelekomcloud_rds_flavors_v1.flavor.id
   volume {
-    type = "COMMON"
+    type = "CLOUDSSD"
     size = 200
   }
   vpc    = "c1095fe7-03df-4205-ad2d-6f4c181d436e"
@@ -75,8 +75,8 @@ resource "opentelekomcloud_rds_instance_v1" "instance" {
 ```hcl
 data "opentelekomcloud_rds_flavors_v1" "flavor" {
   datastore_name    = "SQLServer"
-  datastore_version = "2014 SP2 SE"
-  speccode          = "rds.mssql.s1.2xlarge"
+  datastore_version = "2022_SE"
+  speccode          = "rds.mssql.c2.xlarge"
 }
 
 resource "opentelekomcloud_compute_secgroup_v2" "secgrp_rds" {
@@ -94,7 +94,7 @@ resource "opentelekomcloud_rds_instance_v1" "instance" {
 
   datastore {
     type    = "SQLServer"
-    version = "2014 SP2 SE"
+    version = "2022_SE"
   }
   volume {
     type = "COMMON"
@@ -118,8 +118,8 @@ resource "opentelekomcloud_rds_instance_v1" "instance" {
 ```hcl
 data "opentelekomcloud_rds_flavors_v1" "flavor" {
   datastore_name    = "MySQL"
-  datastore_version = "5.6.33"
-  speccode          = "rds.mysql.s1.medium"
+  datastore_version = "8.0"
+  speccode          = "rds.mysql.n1.2xlarge.2"
 }
 
 resource "opentelekomcloud_compute_secgroup_v2" "secgrp_rds" {
@@ -137,10 +137,10 @@ resource "opentelekomcloud_rds_instance_v1" "instance" {
   flavorref = data.opentelekomcloud_rds_flavors_v1.flavor.id
   datastore {
     type    = "MySQL"
-    version = "5.6.33"
+    version = "8.0"
   }
   volume {
-    type = "COMMON"
+    type = "CLOUDSSD"
     size = 200
   }
   nics {

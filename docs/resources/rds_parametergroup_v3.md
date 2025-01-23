@@ -32,7 +32,7 @@ resource "opentelekomcloud_rds_parametergroup_v3" "pg_1" {
   }
   datastore {
     type    = "mysql"
-    version = "5.6"
+    version = "8.0"
   }
 }
 ```
@@ -56,9 +56,9 @@ The `datastore` block supports:
   The value is case-insensitive and can be `mysql`, `postgresql` or `sqlserver`.
 
 * `version` - (Required) Specifies the database version.
-  * MySQL databases support MySQL `5.6`, `5.7`, `8.0`. Example value: `5.7`.
-  * PostgreSQL databases support PostgreSQL `9.5`, `9.6`, `10` and `11`. Example value: `9.5`.
-  * Microsoft SQL Server databases support `2014 SE`, `2016 SE`, and `2016 EE`. Example value: `2014_SE`.
+  * MySQL databases support MySQL `5.6`, `5.7`, `8.0`. Example value: `8.0`.
+  * PostgreSQL databases support PostgreSQL `11`, `12` and above. Example value: `16`.
+  * Microsoft SQL Server databases support `2017_SE`, `2017_EE`, and above. Example value: `2022_EE`.
 
 
 ## Attributes Reference
