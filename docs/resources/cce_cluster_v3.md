@@ -127,6 +127,31 @@ resource "opentelekomcloud_cce_cluster_v3" "cluster_1" {
 }
 ```
 
+### CCE HA cluster
+
+```hcl
+variable "vpc_id" {}
+variable "subnet_id" {}
+
+resource "opentelekomcloud_cce_cluster_v3" "cluster" {
+  name                   = "cluster"
+  flavor_id              = "cce.s2.small"
+  vpc_id                 = var.vpc_id
+  subnet_id              = var.subnet_id
+  container_network_type = "overlay_l2"
+
+  masters {
+    availability_zone = "eu-de-01"
+  }
+  masters {
+    availability_zone = "eu-de-02"
+  }
+  masters {
+    availability_zone = "eu-de-03"
+  }
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -205,6 +230,11 @@ The following arguments are supported:
   The private key used by the Kubernetes cluster does not support password encryption. Use an unencrypted private key.
 
 * `multi_az` - (Optional) Enable multiple AZs for the cluster, only when using HA flavors. Changing this parameter will create a new cluster resource.
+  This parameter and `masters` are alternative.
+
+* `masters` - (Optional, List, ForceNew) Specifies the advanced configuration of master nodes.
+  The [object](#cce_cluster_masters) structure is documented below.
+  This parameter and `multi_az` are alternative. Changing this parameter will create a new cluster resource.
 
 * `eip` - (Optional) EIP address of the cluster.
 
@@ -251,6 +281,12 @@ The following arguments are supported:
 
 * `delete_all_network` - (Optional) Specified whether to delete all associated network resources when deleting the CCE
   cluster. valid values are **true**, **try** and **false**. Default is **false**.
+
+<a name="cce_cluster_masters"></a>
+The `masters` block supports:
+
+* `availability_zone` - (Optional, String, ForceNew) Specifies the availability zone of the master node.
+  Changing this parameter will create a new cluster resource.
 
 -> Note: Cluster custom deletion info and properties can be checked here:
   [Deleting a Specified Cluster.](https://docs.otc.t-systems.com/cloud-container-engine/api-ref/apis/cluster_management/deleting_a_specified_cluster.html)
