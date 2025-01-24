@@ -167,6 +167,24 @@ func ResourceCCEClusterV3() *schema.Resource {
 				ForceNew: true,
 				Default:  "x509",
 			},
+			"masters": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				ForceNew:      true,
+				Computed:      true,
+				MaxItems:      3,
+				ConflictsWith: []string{"multi_az"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"availability_zone": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+							Computed: true,
+						},
+					},
+				},
+			},
 			"authenticating_proxy": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -213,9 +231,10 @@ func ResourceCCEClusterV3() *schema.Resource {
 					"ipvs", "iptables"}, true),
 			},
 			"multi_az": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				ForceNew: true,
+				Type:          schema.TypeBool,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"masters"},
 			},
 			"eip": {
 				Type:         schema.TypeString,
@@ -349,6 +368,31 @@ var associateDeleteSchema *schema.Schema = &schema.Schema{
 	ConflictsWith: []string{"delete_all_storage", "delete_all_network"},
 }
 
+func resourceClusterMasters(d *schema.ResourceData) ([]clusters.MasterSpec, error) {
+	if v, ok := d.GetOk("masters"); ok {
+		flavorId := d.Get("flavor_id").(string)
+		mastersRaw := v.([]interface{})
+		if strings.Contains(flavorId, "s1") && len(mastersRaw) != 1 {
+			return nil, fmt.Errorf("error creating CCE cluster: "+
+				"single-master cluster need 1 az for master node, but got %d", len(mastersRaw))
+		}
+		if strings.Contains(flavorId, "s2") && len(mastersRaw) != 3 {
+			return nil, fmt.Errorf("error creating CCE cluster: "+
+				"high-availability cluster need 3 az for master nodes, but got %d", len(mastersRaw))
+		}
+		masters := make([]clusters.MasterSpec, len(mastersRaw))
+		for i, raw := range mastersRaw {
+			rawMap := raw.(map[string]interface{})
+			masters[i] = clusters.MasterSpec{
+				AvailabilityZone: rawMap["availability_zone"].(string),
+			}
+		}
+		return masters, nil
+	}
+
+	return nil, nil
+}
+
 func resourceClusterLabelsV3(d *schema.ResourceData) map[string]string {
 	m := make(map[string]string)
 	for key, val := range d.Get("labels").(map[string]interface{}) {
@@ -447,6 +491,12 @@ func resourceCCEClusterV3Create(ctx context.Context, d *schema.ResourceData, met
 		}
 		createOpts.Spec.EniNetwork = &eniNetwork
 	}
+
+	masters, err := resourceClusterMasters(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	createOpts.Spec.Masters = masters
 
 	create, err := clusters.Create(client, createOpts)
 
@@ -629,6 +679,16 @@ func resourceCCEClusterV3Read(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
+	// Set masters
+	var masterList []map[string]interface{}
+	for _, masterObj := range cluster.Spec.Masters {
+		master := make(map[string]interface{})
+		master["availability_zone"] = masterObj.AvailabilityZone
+		masterList = append(masterList, master)
+	}
+	if err := d.Set("masters", masterList); err != nil {
+		return diag.FromErr(err)
+	}
 	if err := d.Set("security_group_control", controlSecGroupID); err != nil {
 		return diag.FromErr(err)
 	}
