@@ -1,4 +1,4 @@
 ---
 enhancements:
   - |
-    **[CCE]** Add possibility to specify `availability_zone` for ``resource/opentelekomcloud_cce_custer_v3`` documentation (`#2800 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2800>`_)
+    **[CCE]** Add possibility to specify `availability_zone` for ``resource/opentelekomcloud_cce_custer_v3`` (`#2800 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2800>`_)
