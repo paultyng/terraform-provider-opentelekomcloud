@@ -44,6 +44,8 @@ The following arguments are supported:
 
 The following attributes are exported:
 
+* `id` - The floating IP id.
+
 * `pool` - See Argument Reference above.
 
 * `address` - The actual floating IP address itself.

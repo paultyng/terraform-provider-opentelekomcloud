@@ -84,8 +84,10 @@ The following arguments are supported:
   Changing this parameter will create a new resource.
 
 * `gateway_ip` - (Required, String, ForceNew) The VPN gateway IP ID.
+  * When `network_type` of the VPN gateway is set to `public`, set this parameter to the EIP IDs of the VPN gateway.
+  * When `network_type` of the VPN gateway is set to `private`, set this parameter to the private IP addresses of the VPN gateway.
 
-  Changing this parameter will create a new resource.
+    Changing this parameter will create a new resource.
 
 * `vpn_type` - (Required, String, ForceNew) The connection type. The value can be `policy`, `static` or `bgp`.
 
