@@ -233,6 +233,8 @@ In addition to all arguments above, the following attributes are exported:
 <a name="GatewayGetResponseEip"></a>
 The `eip1` or `eip2` block supports:
 
+* `id` - The public IP ID.
+
 * `bandwidth_id` - The bandwidth ID.
 
 * `ip_address` - The public IP address.

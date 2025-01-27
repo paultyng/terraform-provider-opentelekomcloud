@@ -95,6 +95,8 @@ The `bandwidth` block supports:
 
 The following attributes are exported:
 
+* `id` - The VPC EIP id.
+
 * `region` - See Argument Reference above.
 
 * `publicip/type` - See Argument Reference above.
