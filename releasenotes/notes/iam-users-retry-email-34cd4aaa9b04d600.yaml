@@ -1,0 +1,4 @@
+---
+enhancements:
+  - |
+    **[IAM]** Added retry func for ``send_welcome_email`` for ``resource/opentelekomcloud_identity_user_v3`` (`#2803 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2803>`_)
