@@ -131,14 +131,10 @@ func resourceDmsReassignPartitionsV2Create(ctx context.Context, d *schema.Resour
 		return diag.Errorf("error submitting partition reassignment for Kafka instance: %s", err)
 	}
 
-	mErr := multierror.Append(
-		nil,
-		d.Set("region", config.GetRegion(d)),
-		d.Set("instance_id", instanceId),
-		d.Set("reassignment_time", initResp.ReassignmentTime),
-	)
+	d.SetId(instanceId)
+	d.Set("reassignment_time", initResp.ReassignmentTime)
 
-	return diag.FromErr(mErr.ErrorOrNil())
+	return resourceReassignPartitionsV2Read(ctx, d, meta)
 }
 
 func resourceReassignPartitionsV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -148,7 +144,7 @@ func resourceReassignPartitionsV2Read(ctx context.Context, d *schema.ResourceDat
 		nil,
 		d.Set("region", config.GetRegion(d)),
 		d.Set("instance_id", instanceId),
-		d.Set("reassignment_time", d.Get("reassignment_time").(string)),
+		d.Set("reassignment_time", d.Get("reassignment_time").(int)),
 	)
 
 	return diag.FromErr(mErr.ErrorOrNil())
