@@ -13,7 +13,6 @@ import (
 const resourceReassignPartitionsV2Name = "opentelekomcloud_dms_reassign_partitions_v2.rp_1"
 
 func TestAccDmsReassignPartitionsV2_basic(t *testing.T) {
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
@@ -70,10 +69,11 @@ resource "opentelekomcloud_dms_topic_v1" "topic_1" {
 }
 
 resource "opentelekomcloud_dms_reassign_partitions_v2" "rp_1" {
-  instance_id = opentelekomcloud_dms_instance_v2.instance_1.id
+  instance_id   = opentelekomcloud_dms_instance_v2.instance_1.id
   time_estimate = false
   reassignments {
-    topic = opentelekomcloud_dms_topic_v1.topic_1.name
+    topic   = opentelekomcloud_dms_topic_v1.topic_1.name
+    brokers = [0, 1, 2]
   }
 }
 `, common.DataSourceSecGroupDefault, common.DataSourceSubnet, instanceName, topicName)
