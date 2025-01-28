@@ -132,7 +132,10 @@ func resourceDmsReassignPartitionsV2Create(ctx context.Context, d *schema.Resour
 	}
 
 	d.SetId(instanceId)
-	d.Set("reassignment_time", initResp.ReassignmentTime)
+	err = d.Set("reassignment_time", initResp.ReassignmentTime)
+	if err != nil {
+		return diag.Errorf("error setting reassignment time: %s", err)
+	}
 
 	return resourceReassignPartitionsV2Read(ctx, d, meta)
 }
