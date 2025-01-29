@@ -6,9 +6,11 @@ import (
 	"log"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
@@ -177,8 +179,16 @@ func resourceIdentityUserV3Create(ctx context.Context, d *schema.ResourceData, m
 	d.SetId(user.ID)
 
 	if d.Get("send_welcome_email").(bool) {
-		if err := oldusers.SendWelcomeEmail(client, d.Id()).ExtractErr(); err != nil {
-			return fmterr.Errorf("error sending a welcome email: %w", err)
+		timeout := 6 * time.Second // 3 attempts with 2-second delay
+		retryErr := resource.RetryContext(ctx, timeout, func() *resource.RetryError {
+			err := oldusers.SendWelcomeEmail(client, d.Id()).ExtractErr()
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("error sending a welcome email, retrying: %w", err))
+			}
+			return nil
+		})
+		if retryErr != nil {
+			return fmterr.Errorf("error sending a welcome email: %w", retryErr)
 		}
 	}
 
