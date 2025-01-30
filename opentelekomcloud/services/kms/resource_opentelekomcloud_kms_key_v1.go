@@ -380,6 +380,15 @@ func resourceKmsKeyV1Delete(ctx context.Context, d *schema.ResourceData, meta in
 		return fmterr.Errorf(errCreationClient, err)
 	}
 
+	// Delete tags before KMS keys
+	tagRaw := d.Get("tags").(map[string]interface{})
+	if len(tagRaw) > 0 {
+		tagList := common.ExpandResourceTags(tagRaw)
+		if err := tags.Delete(client, "kms", d.Id(), tagList).ExtractErr(); err != nil {
+			return fmterr.Errorf("error deleting tags of KMS: %s", err)
+		}
+	}
+
 	key, err := keys.Get(client, d.Id())
 	if err != nil {
 		return common.CheckDeletedDiag(d, err, "key")
