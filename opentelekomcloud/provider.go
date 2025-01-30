@@ -407,6 +407,7 @@ func Provider() *schema.Provider {
 			"opentelekomcloud_cbr_vault_v3":                              cbr.ResourceCBRVaultV3(),
 			"opentelekomcloud_cce_addon_v3":                              cce.ResourceCCEAddonV3(),
 			"opentelekomcloud_cce_cluster_v3":                            cce.ResourceCCEClusterV3(),
+			"opentelekomcloud_cce_node_attach_v3":                        cce.ResourceCCENodeV3Attach(),
 			"opentelekomcloud_cce_node_v3":                               cce.ResourceCCENodeV3(),
 			"opentelekomcloud_cce_node_pool_v3":                          cce.ResourceCCENodePoolV3(),
 			"opentelekomcloud_ces_alarmrule":                             ces.ResourceAlarmRule(),
