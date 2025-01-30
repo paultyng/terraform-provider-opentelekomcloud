@@ -14,16 +14,54 @@ Up-to-date reference of API arguments for CCE cluster node you can get at
 
 Add a node from an existing ECS server to a CCE cluster.
 
+-> **Note:** When using the `opentelekomcloud_cce_node_attach_v3` resource with server_id dependent resource, the following
+attributes should be included in lifecycle.ignore_changes: `name`, `image_id`, `password`, `key_name`, `tags`, and `nics`.
+These attributes are subject to modification during instance lifecycle and should be ignored to prevent undesired resource recreation.
+
 ## Basic Usage
 
 ```hcl
 variable "cluster_id" {}
+variable "server_name" {}
 variable "server_id" {}
 variable "keypair_name" {}
+variable "flavor_id" {}
+variable "image_id" {}
+
+resource "opentelekomcloud_ecs_instance_v1" "instance_1" {
+  name     = var.server_name
+  image_id = var.image_id
+  flavor   = var.flavor_id
+  vpc_id   = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
+
+  nics {
+    network_id = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
+  }
+
+  availability_zone = "eu-de-01"
+  data_disks {
+    type = "SSD"
+    size = 60
+  }
+
+  password                    = "Password@123"
+  delete_disks_on_termination = true
+
+  lifecycle {
+    ignore_changes = [
+      name,
+      image_id,
+      password,
+      key_name,
+      tags,
+      nics
+    ]
+  }
+}
 
 resource "opentelekomcloud_cce_node_attach_v3" "test" {
   cluster_id = var.cluster_id
-  server_id  = var.server_id
+  server_id  = opentelekomcloud_ecs_instance_v1.instance_1.id
   key_pair   = var.keypair_name
   os         = "EulerOS 2.5"
 
