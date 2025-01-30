@@ -33,7 +33,7 @@ func ResourceDNSZoneV2() *schema.Resource {
 		UpdateContext: resourceDNSZoneV2Update,
 		DeleteContext: resourceDNSZoneV2Delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceDnsZoneV2ImportState,
 		},
 
 		Timeouts: &schema.ResourceTimeout{
@@ -126,15 +126,18 @@ func resourceDNSRouter(d *schema.ResourceData) map[string]string {
 
 func resourceDNSZoneV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*cfg.Config)
+	region := config.GetRegion(d)
 	client, err := common.ClientFromCtx(ctx, keyClientV2, func() (*golangsdk.ServiceClient, error) {
-		return config.DnsV2Client(config.GetRegion(d))
+		return config.DnsV2Client(region)
 	})
 	if err != nil {
 		return fmterr.Errorf(errCreationClient, err)
 	}
-
 	zone_type := d.Get("type").(string)
 	router := d.Get("router").(*schema.Set).List()
+
+	// Dirty hack for nl region without it impossible to create public zone
+	nlClientOverride(d, region, client)
 
 	// router is required when creating private zone
 	if zone_type == "private" {
@@ -237,12 +240,16 @@ func resourceDNSZoneV2Create(ctx context.Context, d *schema.ResourceData, meta i
 
 func resourceDNSZoneV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*cfg.Config)
+	region := config.GetRegion(d)
 	client, err := common.ClientFromCtx(ctx, keyClientV2, func() (*golangsdk.ServiceClient, error) {
-		return config.DnsV2Client(config.GetRegion(d))
+		return config.DnsV2Client(region)
 	})
 	if err != nil {
 		return fmterr.Errorf(errCreationClient, err)
 	}
+
+	// Dirty hack for nl region without it impossible to create public zone
+	nlClientOverride(d, region, client)
 
 	n, err := zones.Get(client, d.Id()).Extract()
 	if err != nil {
@@ -283,15 +290,18 @@ func resourceDNSZoneV2Read(ctx context.Context, d *schema.ResourceData, meta int
 
 func resourceDNSZoneV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*cfg.Config)
+	region := config.GetRegion(d)
 	client, err := common.ClientFromCtx(ctx, keyClientV2, func() (*golangsdk.ServiceClient, error) {
-		return config.DnsV2Client(config.GetRegion(d))
+		return config.DnsV2Client(region)
 	})
 	if err != nil {
 		return fmterr.Errorf(errCreationClient, err)
 	}
-
 	zone_type := d.Get("type").(string)
 	router := d.Get("router").(*schema.Set).List()
+
+	// Dirty hack for nl region without it impossible to create public zone
+	nlClientOverride(d, region, client)
 
 	// router is required when updating private zone
 	if zone_type == "private" {
@@ -412,12 +422,16 @@ func resourceDNSZoneV2Update(ctx context.Context, d *schema.ResourceData, meta i
 
 func resourceDNSZoneV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*cfg.Config)
+	region := config.GetRegion(d)
 	client, err := common.ClientFromCtx(ctx, keyClientV2, func() (*golangsdk.ServiceClient, error) {
-		return config.DnsV2Client(config.GetRegion(d))
+		return config.DnsV2Client(region)
 	})
 	if err != nil {
 		return fmterr.Errorf(errCreationClient, err)
 	}
+
+	// Dirty hack for nl region without it impossible to create public zone
+	nlClientOverride(d, region, client)
 
 	_, err = zones.Delete(client, d.Id()).Extract()
 	if err != nil {
@@ -445,6 +459,13 @@ func resourceDNSZoneV2Delete(ctx context.Context, d *schema.ResourceData, meta i
 
 	d.SetId("")
 	return nil
+}
+
+func nlClientOverride(d *schema.ResourceData, region string, client *golangsdk.ServiceClient) {
+	if d.Get("type").(string) == "public" && region == "eu-nl" {
+		client.Endpoint = strings.Replace(client.Endpoint, "eu-nl", "eu-de", 1)
+		client.ResourceBase = strings.Replace(client.ResourceBase, "eu-nl", "eu-de", 1)
+	}
 }
 
 func parseStatus(rawStatus string) string {
@@ -576,4 +597,54 @@ func logHttpError(err error) error {
 		return fmt.Errorf("%s\n %s", httpErr.Error(), httpErr.Body)
 	}
 	return err
+}
+
+func resourceDnsZoneV2ImportState(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	config := meta.(*cfg.Config)
+	region := config.GetRegion(d)
+	client, err := common.ClientFromCtx(ctx, keyClientV2, func() (*golangsdk.ServiceClient, error) {
+		return config.DnsV2Client(region)
+	})
+	if err != nil {
+		return []*schema.ResourceData{d}, fmt.Errorf(errCreationClient, err)
+	}
+	_, err = zones.Get(client, d.Id()).Extract()
+	if err != nil {
+		// Check if the region is "eu-nl" and attempt to retry with "eu-de"
+		if region == "eu-nl" {
+			client.Endpoint = strings.Replace(client.Endpoint, "eu-nl", "eu-de", 1)
+			client.ResourceBase = strings.Replace(client.ResourceBase, "eu-nl", "eu-de", 1)
+			zoneId := d.Id()
+			n, err := zones.Get(client, zoneId).Extract()
+			if err != nil {
+				return []*schema.ResourceData{d}, fmt.Errorf("error getting OpenTelekomCloud DNS zone from server: %s", err)
+			}
+			mErr := multierror.Append(
+				d.Set("name", n.Name),
+				d.Set("email", n.Email),
+				d.Set("description", n.Description),
+				d.Set("ttl", n.TTL),
+				d.Set("type", n.ZoneType),
+				d.Set("region", config.GetRegion(d)),
+			)
+			if err := mErr.ErrorOrNil(); err != nil {
+				return []*schema.ResourceData{d}, fmt.Errorf("error saving OpenTelekomCloud DNS attributes to state: %s", err)
+			}
+			if err = d.Set("masters", n.Masters); err != nil {
+				return []*schema.ResourceData{d}, fmt.Errorf("error saving masters to state for OpenTelekomCloud DNS zone (%s): %s", d.Id(), err)
+			}
+			resourceTags, err := tags.Get(client, serviceMap[n.ZoneType], d.Id()).Extract()
+			if err != nil {
+				return []*schema.ResourceData{d}, fmt.Errorf("error fetching OpenTelekomCloud DNS zone tags: %s", err)
+			}
+			tagmap := common.TagsToMap(resourceTags)
+			if err := d.Set("tags", tagmap); err != nil {
+				return []*schema.ResourceData{d}, fmt.Errorf("error saving tags for OpenTelekomCloud DNS zone %s: %s", d.Id(), err)
+			}
+			return []*schema.ResourceData{d}, nil
+		}
+		return []*schema.ResourceData{d}, fmt.Errorf("error getting OpenTelekomCloud DNS zone from server: %s", err)
+	}
+
+	return []*schema.ResourceData{d}, nil
 }

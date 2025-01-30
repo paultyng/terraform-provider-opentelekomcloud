@@ -122,6 +122,7 @@ func dataSourceDNSZoneV2Read(_ context.Context, d *schema.ResourceData, meta int
 		listOpts.Tags = common.ExpandResourceTags(tags)
 	}
 
+	// Initial attempt to retrieve zones
 	pages, err := zones.List(client, listOpts).AllPages()
 	if err != nil {
 		return fmterr.Errorf("unable to retrieve zones: %w", err)
@@ -130,6 +131,21 @@ func dataSourceDNSZoneV2Read(_ context.Context, d *schema.ResourceData, meta int
 	allZones, err := zones.ExtractZones(pages)
 	if err != nil {
 		return fmterr.Errorf("unable to extract zones: %w", err)
+	}
+	if allZones == nil {
+		// Check if the region is "eu-nl" and retry with "eu-de"
+		if config.GetRegion(d) == "eu-nl" {
+			replaceNlEndpoint(client)
+			// Retry the request after updating the endpoint
+			pages, err = zones.List(client, listOpts).AllPages()
+			if err != nil {
+				return fmterr.Errorf("unable to retrieve zones: %w", err)
+			}
+			allZones, err = zones.ExtractZones(pages)
+			if err != nil {
+				return fmterr.Errorf("unable to extract zones: %w", err)
+			}
+		}
 	}
 
 	if len(allZones) < 1 {

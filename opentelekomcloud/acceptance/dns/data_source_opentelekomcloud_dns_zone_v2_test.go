@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/common"
 )
 
@@ -16,11 +15,12 @@ const dataZoneName = "data.opentelekomcloud_dns_zone_v2.z1"
 func TestAccOpenStackDNSZoneV2DataSource_basic(t *testing.T) {
 	zone := randomZoneName()
 	randZoneTag := fmt.Sprintf("value-%s", acctest.RandString(5))
+	dc := common.InitDataSourceCheck(dataZoneName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheckRequiredEnvVars(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      dc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccOpenStackDNSZoneV2DataSourceZone(zone, randZoneTag),
@@ -28,6 +28,7 @@ func TestAccOpenStackDNSZoneV2DataSource_basic(t *testing.T) {
 			{
 				Config: testAccOpenStackDNSZoneV2DataSourceBasic(zone, randZoneTag),
 				Check: resource.ComposeTestCheckFunc(
+					dc.CheckResourceExists(),
 					testAccCheckDNSZoneV2DataSourceID(dataZoneName),
 					resource.TestCheckResourceAttr(dataZoneName, "name", zone),
 					resource.TestCheckResourceAttr(dataZoneName, "ttl", "3000"),
@@ -45,11 +46,12 @@ func TestAccOpenStackDNSZoneV2DataSource_byTag(t *testing.T) {
 	zone1 := randomZoneName()
 	zone2 := randomZoneName()
 	randZoneTag := fmt.Sprintf("value-%s", acctest.RandString(5))
+	dc := common.InitDataSourceCheck(dataZoneName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheckRequiredEnvVars(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      dc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccOpenStackDNSZoneV2DataSourceZone2(zone1, zone2, randZoneTag),
@@ -66,11 +68,12 @@ func TestAccOpenStackDNSZoneV2DataSource_byTag(t *testing.T) {
 
 func TestAccOpenStackDNSZoneV2DataSource_private(t *testing.T) {
 	zone1 := randomZoneName()
+	dc := common.InitDataSourceCheck(dataZoneName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheckRequiredEnvVars(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      dc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2ZonePrivate(zone1),

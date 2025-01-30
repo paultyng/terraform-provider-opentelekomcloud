@@ -2,10 +2,12 @@ package dns
 
 import (
 	"context"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	golangsdk "github.com/opentelekomcloud/gophertelekomcloud"
 	"github.com/opentelekomcloud/gophertelekomcloud/openstack/dns/v2/nameservers"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/cfg"
@@ -54,7 +56,17 @@ func dataSourceDNSNameserverRead(_ context.Context, d *schema.ResourceData, meta
 	if v, ok := d.GetOk("zone_id"); ok {
 		allNameservers, err = nameservers.List(client, v.(string)).Extract()
 		if err != nil {
-			return fmterr.Errorf("Failed to extract nameservers: %s", err)
+			// Check if the region is "eu-nl" and retry with "eu-de"
+			if config.GetRegion(d) == "eu-nl" {
+				replaceNlEndpoint(client)
+				// Retry the request after updating the endpoint
+				allNameservers, err = nameservers.List(client, v.(string)).Extract()
+				if err != nil {
+					return fmterr.Errorf("unable to retrieve nameservers: %w", err)
+				}
+			} else {
+				return fmterr.Errorf("unable to retrieve nameservers: %w", err)
+			}
 		}
 	}
 
@@ -82,4 +94,9 @@ func dataSourceDNSNameserverRead(_ context.Context, d *schema.ResourceData, meta
 	}
 
 	return nil
+}
+
+func replaceNlEndpoint(client *golangsdk.ServiceClient) {
+	client.Endpoint = strings.Replace(client.Endpoint, "eu-nl", "eu-de", 1)
+	client.ResourceBase = strings.Replace(client.ResourceBase, "eu-nl", "eu-de", 1)
 }

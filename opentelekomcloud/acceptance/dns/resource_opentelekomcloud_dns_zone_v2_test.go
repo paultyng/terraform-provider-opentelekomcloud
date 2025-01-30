@@ -18,24 +18,49 @@ import (
 
 const resourceZoneName = "opentelekomcloud_dns_zone_v2.zone_1"
 
+func getDnsZoneFunc(conf *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	c, err := conf.DnsV2Client(env.OS_REGION_NAME)
+	if err != nil {
+		return nil, fmt.Errorf("error creating OpenTelekomCloud DNS v2 client: %s", err)
+	}
+	if state.Primary.Attributes["type"] == "public" && env.OS_REGION_NAME == "eu-nl" {
+		c.Endpoint = strings.Replace(c.Endpoint, "eu-nl", "eu-de", 1)
+		c.ResourceBase = strings.Replace(c.ResourceBase, "eu-nl", "eu-de", 1)
+	}
+	return zones.Get(c, state.Primary.ID).Extract()
+}
+
 func TestAccDNSV2Zone_basic(t *testing.T) {
-	var zone zones.Zone
 	// TODO: Why does it lowercase names in back-end?
-	var zoneName = fmt.Sprintf("accepttest%s.com.", acctest.RandString(5))
+	var (
+		zone     zones.Zone
+		zoneName = fmt.Sprintf("accbasictest%s.com.", acctest.RandString(5))
+	)
+
+	rc := common.InitResourceCheck(
+		resourceZoneName,
+		&zone,
+		getDnsZoneFunc,
+	)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2ZoneBasic(zoneName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDNSV2ZoneExists(resourceZoneName, &zone),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceZoneName, "description", "a public zone"),
 					resource.TestCheckResourceAttr(resourceZoneName, "tags.foo", "bar"),
 					resource.TestCheckResourceAttr(resourceZoneName, "tags.key", "value"),
 				),
+			},
+			{
+				ResourceName:      resourceZoneName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config: testAccDNSV2ZoneUpdate(zoneName),
@@ -54,12 +79,21 @@ func TestAccDNSV2Zone_basic(t *testing.T) {
 }
 
 func TestAccDNSV2Zone_unDotted(t *testing.T) {
-	zoneName := randomZoneName()
+	var (
+		zone     zones.Zone
+		zoneName = randomZoneName()
+	)
+
+	rc := common.InitResourceCheck(
+		resourceZoneName,
+		&zone,
+		getDnsZoneFunc,
+	)
 	zoneName = strings.TrimSuffix(zoneName, ".")
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2ZoneBasic(zoneName),
@@ -69,20 +103,27 @@ func TestAccDNSV2Zone_unDotted(t *testing.T) {
 }
 
 func TestAccDNSV2Zone_private(t *testing.T) {
-	var zone zones.Zone
-	// TODO: Why does it lowercase names in back-end?
-	var zoneName = fmt.Sprintf("acpttest%s.com.", acctest.RandString(5))
+	var (
+		zone     zones.Zone
+		zoneName = fmt.Sprintf("accprivatetest%s.com.", acctest.RandString(5))
+	)
+
+	rc := common.InitResourceCheck(
+		resourceZoneName,
+		&zone,
+		getDnsZoneFunc,
+	)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDNSV2ZonePrivate(zoneName),
 				// ExpectNonEmptyPlan: true,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDNSV2ZoneExists(resourceZoneName, &zone),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttr(resourceZoneName, "description", "a private zone"),
 					resource.TestCheckResourceAttr(resourceZoneName, "type", "private"),
 					resource.TestCheckResourceAttr(resourceZoneName, "tags.foo", "bar"),
@@ -94,20 +135,26 @@ func TestAccDNSV2Zone_private(t *testing.T) {
 }
 
 func TestAccDNSV2Zone_readTTL(t *testing.T) {
-	var zone zones.Zone
-	var zoneName = fmt.Sprintf("ACPTTEST%s.com.", acctest.RandString(5))
+	var (
+		zone     zones.Zone
+		zoneName = fmt.Sprintf("accttltest%s.com.", acctest.RandString(5))
+	)
+
+	rc := common.InitResourceCheck(
+		resourceZoneName,
+		&zone,
+		getDnsZoneFunc,
+	)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccDNSV2ZoneReadTTL(zoneName),
-				ExpectNonEmptyPlan: true,
+				Config: testAccDNSV2ZoneReadTTL(zoneName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDNSV2ZoneExists(resourceZoneName, &zone),
-					// resource.TestCheckResourceAttr(resourceZoneName, "type", "PRIMARY"),
+					rc.CheckResourceExists(),
 					resource.TestMatchResourceAttr(resourceZoneName, "ttl", regexp.MustCompile("^[0-9]+$")),
 				),
 			},
@@ -117,18 +164,21 @@ func TestAccDNSV2Zone_readTTL(t *testing.T) {
 
 func TestAccDNSV2Zone_timeout(t *testing.T) {
 	var zone zones.Zone
-	var zoneName = fmt.Sprintf("ACPTTEST%s.com.", acctest.RandString(5))
-
+	var zoneName = fmt.Sprintf("acctimeouttest%s.com.", acctest.RandString(5))
+	rc := common.InitResourceCheck(
+		resourceZoneName,
+		&zone,
+		getDnsZoneFunc,
+	)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckDNSV2ZoneDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccDNSV2ZoneTimeout(zoneName),
-				ExpectNonEmptyPlan: true,
+				Config: testAccDNSV2ZoneTimeout(zoneName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDNSV2ZoneExists(resourceZoneName, &zone),
+					rc.CheckResourceExists(),
 				),
 			},
 		},
@@ -147,59 +197,6 @@ func TestAccCheckDNSV2Zone_routerValidation(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckDNSV2ZoneDestroy(s *terraform.State) error {
-	config := common.TestAccProvider.Meta().(*cfg.Config)
-	client, err := config.DnsV2Client(env.OS_REGION_NAME)
-	if err != nil {
-		return fmt.Errorf("error creating OpenTelekomCloud DNS client: %s", err)
-	}
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "opentelekomcloud_dns_zone_v2" {
-			continue
-		}
-
-		_, err := zones.Get(client, rs.Primary.ID).Extract()
-		if err == nil {
-			return fmt.Errorf("zone still exists")
-		}
-	}
-
-	return nil
-}
-
-func testAccCheckDNSV2ZoneExists(n string, zone *zones.Zone) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no ID is set")
-		}
-
-		config := common.TestAccProvider.Meta().(*cfg.Config)
-		client, err := config.DnsV2Client(env.OS_REGION_NAME)
-		if err != nil {
-			return fmt.Errorf("error creating OpenTelekomCloud DNS client: %s", err)
-		}
-
-		found, err := zones.Get(client, rs.Primary.ID).Extract()
-		if err != nil {
-			return err
-		}
-
-		if found.ID != rs.Primary.ID {
-			return fmt.Errorf("zone not found")
-		}
-
-		*zone = *found
-
-		return nil
-	}
 }
 
 func testAccDNSV2ZoneBasic(zoneName string) string {
