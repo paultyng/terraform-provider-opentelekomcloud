@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    **[KMS]** Fix tag deletion for ``resource/opentelekomcloud_kms_key_v1`` (`#2806 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2806>`_)
