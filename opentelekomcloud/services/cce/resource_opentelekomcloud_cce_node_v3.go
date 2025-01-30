@@ -675,6 +675,13 @@ func getNodeIDFromJob(ctx context.Context, client *golangsdk.ServiceClient, jobI
 		}
 	}
 
+	for _, s := range subJob.Spec.SubJobs {
+		if s.Spec.Type == "InstallNode" {
+			nodeID = s.Spec.ResourceID
+			break
+		}
+	}
+
 	if nodeID == "" {
 		return "", fmt.Errorf("can't find node ID in job response\n%s", explainNodesJob(subJob))
 	}

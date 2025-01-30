@@ -3,6 +3,7 @@ module github.com/opentelekomcloud/terraform-provider-opentelekomcloud
 go 1.20
 
 require (
+	github.com/GehirnInc/crypt v0.0.0-20230320061759-8cc1b52080c5
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/aws/aws-sdk-go v1.37.0
 	github.com/go-sql-driver/mysql v1.7.1
@@ -17,7 +18,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/keybase/go-crypto v0.0.0-20200123153347-de78d2cb44f4
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/opentelekomcloud/gophertelekomcloud v0.9.4-0.20250123103327-869bcd243cf2
+	github.com/opentelekomcloud/gophertelekomcloud v0.9.4-0.20250130080633-6aaed7150062
 	github.com/unknwon/com v1.0.1
 	golang.org/x/crypto v0.31.0
 	golang.org/x/sync v0.10.0

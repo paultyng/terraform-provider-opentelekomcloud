@@ -1,0 +1,4 @@
+---
+features:
+  |
+  **[CCE]** Add new resource ``resource/opentelekomcloud_cce_node_attach_v3`` (`#2804 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2804>`_)

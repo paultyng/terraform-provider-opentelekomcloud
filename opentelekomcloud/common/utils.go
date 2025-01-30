@@ -2,9 +2,11 @@ package common
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"reflect"
 	"regexp"
@@ -12,6 +14,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/GehirnInc/crypt"
+
+	_ "github.com/GehirnInc/crypt/sha512_crypt"
 
 	ver "github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -22,6 +28,8 @@ import (
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/cfg"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/fmterr"
 )
+
+var letters = []byte("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func LooksLikeJsonString(s interface{}) bool {
 	return regexp.MustCompile(`^\s*{`).MatchString(s.(string))
@@ -567,4 +575,45 @@ func StrSliceContainsAnother(b []string, s []string) bool {
 		}
 	}
 	return true
+}
+
+// Salt generates a random salt according to given size
+func Salt(size int) ([]byte, error) {
+	salt := make([]byte, size)
+	_, err := io.ReadFull(rand.Reader, salt)
+	if err != nil {
+		return nil, fmt.Errorf("error generating salt: %s", err)
+	}
+
+	max := uint8(len(letters))
+	arc := uint8(0)
+	for i, x := range salt {
+		arc = x % max
+		salt[i] = letters[arc]
+	}
+	return salt, nil
+}
+
+// TryPasswordEncrypt tries to encrypt given password if it's not encrypted
+func TryPasswordEncrypt(password string) (string, error) {
+	if _, err := base64.StdEncoding.DecodeString(password); err != nil {
+		return PasswordEncrypt(password)
+	}
+	return password, nil
+}
+
+// PasswordEncrypt encrypts given password with sha512
+func PasswordEncrypt(password string) (string, error) {
+	saltBytes, err := Salt(16)
+	if err != nil {
+		return "", err
+	}
+	salt := "$6$" + string(saltBytes) + "$"
+
+	sha512crypt := crypt.SHA512.New()
+	passwordEncrypted, err := sha512crypt.Generate([]byte(password), []byte(salt))
+	if err != nil {
+		return "", fmt.Errorf("error encrypting the password: %s", err)
+	}
+	return base64.StdEncoding.EncodeToString([]byte(passwordEncrypted)), nil
 }
