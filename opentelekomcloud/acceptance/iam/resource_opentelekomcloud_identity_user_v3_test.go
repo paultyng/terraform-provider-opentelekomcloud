@@ -8,32 +8,45 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	oldusers "github.com/opentelekomcloud/gophertelekomcloud/openstack/identity/v3/users"
+	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/env"
 
-	"github.com/opentelekomcloud/gophertelekomcloud/openstack/identity/v3/users"
+	"github.com/opentelekomcloud/gophertelekomcloud/openstack/identity/v3.0/users"
 
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/common"
-	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/acceptance/env"
 	"github.com/opentelekomcloud/terraform-provider-opentelekomcloud/opentelekomcloud/common/cfg"
 )
 
 const resourceName = "opentelekomcloud_identity_user_v3.user_1"
 
+func getIdentityUserResourceFunc(c *cfg.Config, state *terraform.ResourceState) (interface{}, error) {
+	client, err := c.IdentityV30Client()
+	if err != nil {
+		return nil, fmt.Errorf("error creating IAM client: %s", err)
+	}
+	return users.GetUser(client, state.Primary.ID)
+}
+
 func TestAccIdentityV3User_basic(t *testing.T) {
 	var user users.User
 	userName := acctest.RandomWithPrefix("tf-user")
-
+	rc := common.InitResourceCheck(
+		resourceName,
+		&user,
+		getIdentityUserResourceFunc,
+	)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			common.TestAccPreCheck(t)
 			common.TestAccPreCheckAdminOnly(t)
 		},
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckIdentityV3UserDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccIdentityV3UserBasic(userName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIdentityV3UserExists(resourceName, &user),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttrPtr(resourceName, "name", &user.Name),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName, "email", "test@acme.org"),
@@ -43,38 +56,20 @@ func TestAccIdentityV3User_basic(t *testing.T) {
 			{
 				Config: testAccIdentityV3UserUpdate(userName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIdentityV3UserExists(resourceName, &user),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttrPtr(resourceName, "name", &user.Name),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceName, "email", "test2@acme.org"),
 					resource.TestCheckResourceAttrSet(resourceName, "domain_id"),
 				),
 			},
-		},
-	})
-}
-
-func TestAccIdentityV3User_importBasic(t *testing.T) {
-	var userName = fmt.Sprintf("ACCPTTEST-%s", acctest.RandString(5))
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			common.TestAccPreCheck(t)
-			common.TestAccPreCheckAdminOnly(t)
-		},
-		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckIdentityV3UserDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccIdentityV3UserImport(userName),
-			},
-
 			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
 					"password",
+					"send_welcome_email",
 				},
 			},
 		},
@@ -82,13 +77,13 @@ func TestAccIdentityV3User_importBasic(t *testing.T) {
 }
 
 func TestAccCheckIAMV3EmailValidation(t *testing.T) {
-	var zoneName = fmt.Sprintf("ACPTTEST%s.com.", acctest.RandString(5))
+	var name = fmt.Sprintf("ACPTTEST%s.com.", acctest.RandString(5))
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccIdentityV3UserWrongEmail(zoneName),
+				Config:      testAccIdentityV3UserWrongEmail(name),
 				ExpectError: regexp.MustCompile(`Error: "email" doesn't comply with email standards+`),
 			},
 		},
@@ -96,13 +91,13 @@ func TestAccCheckIAMV3EmailValidation(t *testing.T) {
 }
 
 func TestAccCheckIAMV3SendEmailValidation(t *testing.T) {
-	var zoneName = fmt.Sprintf("ACPTTEST%s.com.", acctest.RandString(5))
+	var name = fmt.Sprintf("ACPTTEST%s.com.", acctest.RandString(5))
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { common.TestAccPreCheck(t) },
 		ProviderFactories: common.TestAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccIdentityV3UserWrongSendEmail(zoneName),
+				Config:      testAccIdentityV3UserWrongSendEmail(name),
 				ExpectError: regexp.MustCompile(`"send_welcome_email":+`),
 			},
 		},
@@ -112,19 +107,23 @@ func TestAccCheckIAMV3SendEmailValidation(t *testing.T) {
 func TestAccIdentityV3User_protection(t *testing.T) {
 	var user users.User
 	userName := acctest.RandomWithPrefix("tf-user")
-
+	rc := common.InitResourceCheck(
+		resourceName,
+		&user,
+		getIdentityUserResourceFunc,
+	)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			common.TestAccPreCheck(t)
 			common.TestAccPreCheckAdminOnly(t)
 		},
 		ProviderFactories: common.TestAccProviderFactories,
-		CheckDestroy:      testAccCheckIdentityV3UserDestroy,
+		CheckDestroy:      rc.CheckResourceDestroy(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccIdentityV3UserProtectionConfig(userName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIdentityV3UserExists(resourceName, &user),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttrPtr(resourceName, "name", &user.Name),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName, "email", "test@acme.org"),
@@ -136,7 +135,7 @@ func TestAccIdentityV3User_protection(t *testing.T) {
 			{
 				Config: testAccIdentityV3UserProtectionConfigUpdate(userName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIdentityV3UserExists(resourceName, &user),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttrPtr(resourceName, "name", &user.Name),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceName, "email", "test2@acme.org"),
@@ -147,7 +146,7 @@ func TestAccIdentityV3User_protection(t *testing.T) {
 			{
 				Config: testAccIdentityV3UserProtectionConfigRemove(userName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIdentityV3UserExists(resourceName, &user),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttrPtr(resourceName, "name", &user.Name),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceName, "email", "test2@acme.org"),
@@ -157,7 +156,7 @@ func TestAccIdentityV3User_protection(t *testing.T) {
 			{
 				Config: testAccIdentityV3UserProtectionConfigReturn(userName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIdentityV3UserExists(resourceName, &user),
+					rc.CheckResourceExists(),
 					resource.TestCheckResourceAttrPtr(resourceName, "name", &user.Name),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceName, "email", "test2@acme.org"),
@@ -182,56 +181,13 @@ func testAccCheckIdentityV3UserDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := users.Get(client, rs.Primary.ID).Extract()
+		_, err := oldusers.Get(client, rs.Primary.ID).Extract()
 		if err == nil {
 			return fmt.Errorf("user still exists")
 		}
 	}
 
 	return nil
-}
-
-func testAccCheckIdentityV3UserExists(n string, user *users.User) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no ID is set")
-		}
-
-		config := common.TestAccProvider.Meta().(*cfg.Config)
-		identityClient, err := config.IdentityV3Client(env.OS_REGION_NAME)
-		if err != nil {
-			return fmt.Errorf("error creating OpenTelekomcloud IdentityV3 client: %w", err)
-		}
-
-		found, err := users.Get(identityClient, rs.Primary.ID).Extract()
-		if err != nil {
-			return err
-		}
-
-		if found.ID != rs.Primary.ID {
-			return fmt.Errorf("user not found")
-		}
-
-		*user = *found
-
-		return nil
-	}
-}
-
-func testAccIdentityV3UserImport(userName string) string {
-	return fmt.Sprintf(`
-resource "opentelekomcloud_identity_user_v3" "user_1" {
-  name     = "%s"
-  password = "password123@!"
-  enabled  = true
-  email    = "test3@acme.org"
-}
-  `, userName)
 }
 
 func testAccIdentityV3UserBasic(userName string) string {
