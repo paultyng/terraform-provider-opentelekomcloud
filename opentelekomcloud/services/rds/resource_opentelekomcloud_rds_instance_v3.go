@@ -157,7 +157,6 @@ func ResourceRdsInstanceV3() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"security_group_id": {
 				Type:     schema.TypeString,
@@ -837,6 +836,16 @@ func resourceRdsInstanceV3Update(ctx context.Context, d *schema.ResourceData, me
 	})
 	if err != nil {
 		return fmterr.Errorf(errCreateClient, err)
+	}
+
+	if d.HasChange("name") {
+		err = instances.UpdateInstanceName(client, instances.UpdateInstanceNameOpts{
+			Name:       d.Get("name").(string),
+			InstanceId: d.Id(),
+		})
+		if err != nil {
+			return fmterr.Errorf("error changing instance name: %s ", err)
+		}
 	}
 
 	if d.HasChange("restore_from_backup") {

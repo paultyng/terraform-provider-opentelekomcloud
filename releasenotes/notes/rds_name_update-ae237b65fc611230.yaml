@@ -1,0 +1,4 @@
+---
+enhancements:
+  - |
+    **[RDS]** Remove ForceNew from `name` parameter for ``resource/opentelekomcloud_rds_instance_v3`` (`#2808 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2808>`_)
