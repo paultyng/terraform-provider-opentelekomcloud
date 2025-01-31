@@ -326,11 +326,11 @@ The following arguments are supported:
   Use data source [opentelekomcloud_rds_flavors_v3](../data-sources/rds_flavors_v3.md) to get a list of available flavor names.
   Examples could be `rds.pg.n1.large.4` or `rds.pg.x1.8xlarge.4.ha` for HA clusters.
 
-* `name` - (Required, ForceNew) Specifies the DB instance name. The DB instance name of the same type
+* `name` - (Required) Specifies the DB instance name. The DB instance name of the same type
   must be unique for the same tenant. The value must be 4 to 64
   characters in length and start with a letter. It is case-sensitive
   and can contain only letters, digits, hyphens (-), and underscores
-  (_).  Changing this parameter will create a new resource.
+  (_).
 
 * `security_group_id` - (Required) Specifies the security group which the RDS DB instance belongs to.
   Changing this parameter will create a new resource.

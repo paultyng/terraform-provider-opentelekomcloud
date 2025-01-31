@@ -30,7 +30,7 @@ func TestAccRdsInstanceV3Basic(t *testing.T) {
 				Config: testAccRdsInstanceV3Basic(postfix),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRdsInstanceV3Exists(instanceV3ResourceName, &rdsInstance),
-					resource.TestCheckResourceAttr(instanceV3ResourceName, "flavor", "rds.pg.c2.medium"),
+					resource.TestCheckResourceAttr(instanceV3ResourceName, "flavor", "rds.pg.n1.large.4"),
 					resource.TestCheckResourceAttr(instanceV3ResourceName, "db.0.port", "8635"),
 					resource.TestCheckResourceAttr(instanceV3ResourceName, "name", "tf_rds_instance_"+postfix),
 					resource.TestCheckResourceAttr(instanceV3ResourceName, "db.0.type", "PostgreSQL"),
@@ -46,9 +46,10 @@ func TestAccRdsInstanceV3Basic(t *testing.T) {
 			{
 				Config: testAccRdsInstanceV3Update(postfix),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(instanceV3ResourceName, "flavor", "rds.pg.c2.medium"),
+					resource.TestCheckResourceAttr(instanceV3ResourceName, "flavor", "rds.pg.n1.large.4"),
 					resource.TestCheckResourceAttr(instanceV3ResourceName, "volume.0.size", "100"),
 					resource.TestCheckResourceAttr(instanceV3ResourceName, "tags.muh", "value-update"),
+					resource.TestCheckResourceAttr(instanceV3ResourceName, "name", "tf_rds_instance_updated_"+postfix),
 					resource.TestCheckResourceAttr(instanceV3ResourceName, "db.0.port", "8636"),
 					resource.TestCheckResourceAttr(instanceV3ResourceName, "lower_case_table_names", "0"),
 				),
@@ -448,10 +449,10 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   subnet_id         = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
   vpc_id            = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   volume {
-    type = "ULTRAHIGH"
+    type = "CLOUDSSD"
     size = 40
   }
-  flavor = "rds.pg.c2.medium"
+  flavor = "rds.pg.n1.large.4"
   backup_strategy {
     start_time = "08:00-09:00"
     keep_days  = 0
@@ -475,7 +476,7 @@ resource "opentelekomcloud_networking_secgroup_v2" "secgroup" {
 }
 
 resource "opentelekomcloud_rds_instance_v3" "instance" {
-  name              = "tf_rds_instance_%s"
+  name              = "tf_rds_instance_updated_%s"
   availability_zone = ["%s"]
   db {
     password = "Postgres!120521"
@@ -487,10 +488,10 @@ resource "opentelekomcloud_rds_instance_v3" "instance" {
   subnet_id         = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.network_id
   vpc_id            = data.opentelekomcloud_vpc_subnet_v1.shared_subnet.vpc_id
   volume {
-    type = "ULTRAHIGH"
+    type = "CLOUDSSD"
     size = 100
   }
-  flavor = "rds.pg.c2.medium"
+  flavor = "rds.pg.n1.large.4"
   backup_strategy {
     start_time = "08:00-09:00"
     keep_days  = 1
