@@ -32,6 +32,8 @@ func TestAccCTSEventNotificationV3_basic(t *testing.T) {
 				Config: testAccCTSEventNotificationV3Basic(topicName, notificationName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCTSEventNotificationV3Exists(notificationResource, &ctsEventResponse, env.OS_TENANT_NAME),
+					resource.TestCheckResourceAttr(notificationResource, "filter.0.condition", "AND"),
+					resource.TestCheckResourceAttr(notificationResource, "filter.0.rule.#", "2"),
 					resource.TestCheckResourceAttr(notificationResource, "notification_name", notificationName),
 					resource.TestCheckResourceAttr(notificationResource, "status", "disabled"),
 				),
@@ -42,6 +44,8 @@ func TestAccCTSEventNotificationV3_basic(t *testing.T) {
 					testAccCheckCTSEventNotificationV3Exists(notificationResource, &ctsEventResponse, env.OS_TENANT_NAME),
 					resource.TestCheckResourceAttr(notificationResource, "notification_name", notificationNameUpdated),
 					resource.TestCheckResourceAttr(notificationResource, "status", "enabled"),
+					resource.TestCheckResourceAttr(notificationResource, "filter.0.condition", "OR"),
+					resource.TestCheckResourceAttr(notificationResource, "filter.0.rule.#", "3"),
 					resource.TestCheckResourceAttr(notificationResource, "operations.0.resource_type", "evs"),
 					resource.TestCheckResourceAttr(notificationResource, "operations.0.service_type", "EVS"),
 					resource.TestCheckResourceAttr(notificationResource, "operations.0.trace_names.0", "createVolume"),
@@ -203,6 +207,11 @@ resource "opentelekomcloud_cts_event_notification_v3" "notification_v3" {
   operation_type    = "complete"
   topic_id          = opentelekomcloud_smn_topic_v2.topic_1.id
   status            = "disabled"
+
+  filter {
+    condition = "AND"
+    rule      = ["code = 200", "resource_name = test"]
+  }
 }
 `, topic, notification)
 }
@@ -229,6 +238,11 @@ resource "opentelekomcloud_cts_event_notification_v3" "notification_v3" {
     service_type  = "VPC"
     trace_names = ["deleteVpc",
     "createVpc"]
+  }
+
+  filter {
+    condition = "OR"
+    rule      = ["code = 400", "resource_name = name", "api_version = 1.0"]
   }
 }
 `, topic, notification)

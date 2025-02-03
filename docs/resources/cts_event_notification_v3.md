@@ -31,7 +31,7 @@ resource "opentelekomcloud_cts_event_notification_v3" "notification_v3" {
 }
 ```
 
-### Event notification with disabled SMN topic
+### Event notification with disabled SMN topic and filtering
 
 ```hcl
 resource "opentelekomcloud_smn_topic_v2" "topic_1" {
@@ -41,6 +41,11 @@ resource "opentelekomcloud_smn_topic_v2" "topic_1" {
 resource "opentelekomcloud_cts_event_notification_v3" "notification_v3" {
   notification_name = "my_notification"
   operation_type    = "complete"
+
+  filter {
+    condition = "AND"
+    rule      = ["code = 200", "resource_name = test"]
+  }
 }
 ```
 
