@@ -119,22 +119,18 @@ func ResourceCTSEventNotificationV3() *schema.Resource {
 			"notification_id": {
 				Type:     schema.TypeString,
 				Computed: true,
-				ForceNew: true,
 			},
 			"notification_type": {
 				Type:     schema.TypeString,
 				Computed: true,
-				ForceNew: true,
 			},
 			"project_id": {
 				Type:     schema.TypeString,
 				Computed: true,
-				ForceNew: true,
 			},
 			"create_time": {
 				Type:     schema.TypeFloat,
 				Computed: true,
-				ForceNew: true,
 			},
 		},
 	}
