@@ -31,7 +31,7 @@ resource "opentelekomcloud_cts_event_notification_v3" "notification_v3" {
 }
 ```
 
-### Event notification with disabled SMN topic
+### Event notification with disabled SMN topic and filtering
 
 ```hcl
 resource "opentelekomcloud_smn_topic_v2" "topic_1" {
@@ -41,6 +41,11 @@ resource "opentelekomcloud_smn_topic_v2" "topic_1" {
 resource "opentelekomcloud_cts_event_notification_v3" "notification_v3" {
   notification_name = "my_notification"
   operation_type    = "complete"
+
+  filter {
+    condition = "AND"
+    rule      = ["code = 200", "resource_name = test"]
+  }
 }
 ```
 
@@ -79,36 +84,62 @@ resource "opentelekomcloud_cts_event_notification_v3" "notification_v3" {
 
 The following arguments are supported:
 
-* `notification_name` - (Required) The name of event notification rule. Only letters, digits
+* `notification_name` - (Required, String) The name of event notification rule. Only letters, digits
   and underscores (_) are allowed.
 
-* `operation_type` - (Required) The operation type of event rules.
+* `operation_type` - (Required, String) The operation type of event rules.
 
   Possible values:
   * `complete` - Any operation will trigger notification.
 
   * `customized` - Only selected operations will trigger notification.
 
-* `topic_id` - (Optional) Specifies SMN topic URN that will be used for events notification.
+* `topic_id` - (Optional, String) Specifies SMN topic URN that will be used for events notification.
 
-* `status` - (Optional) Specifies whether SMN topic is `enabled` or `disabled`.
+* `status` - (Optional, String) Specifies whether SMN topic is `enabled` or `disabled`.
 
-* `operations` - (Optional) Specifies which operations are enabled in event notification rule. Can be only specified
-  when `operation_type` is set to `customized`. Supported fields:
+* `filter` - (Optional, List) Specifies the filtering rules for notification.
+  The [filter](#CTS_Notification_Filter) structure is documented below.
 
-    * `service_type` - (Required) Specifies the cloud service. Every service should be provided separately, the value
-    must be the acronym of a cloud service that has been connected with CTS.
-
-    * `resource_type` - (Required) Specifies the resource type of custom operation.
-
-    * `trace_names` - (Required) Specifies the list with trace names of custom operation.
+* `operations` - (Optional, List) Specifies an array of operations that will trigger notifications.
+  The [operations](#CTS_Notification_Operations) structure is documented below.
 
 * `notify_user_list` - (Optional) Specifies the list of users whose operations will trigger notifications.
    Currently, up to 50 users in 10 user groups can be configured. Supported fields:
 
-  * `user_group` - (Required) Specifies the IAM user group.
+* `user_group` - (Required) Specifies the IAM user group.
 
-  * `user_list` - (Required) Specifies the list with IAM users which belong to `user_group`.
+* `user_list` - (Required) Specifies the list with IAM users which belong to `user_group`.
+
+<a name="CTS_Notification_Filter"></a>
+The `filter` block supports:
+
+* `condition` - (Required, String) Specifies the relationship between multiple rules. The valid values are as follows:
+    + **AND**: Effective after all filtering conditions are met.
+    + **OR**: Effective when any one of the conditions is met.
+
+* `rule` - (Required, List) Specifies an array of filtering rules. It consists of three parts,
+  the first part is the **key**, the second part is the **rule**, and the third part is the **value**,
+  the format is: **key != value**.
+    + The **key** can be: **api_version**, **code**, **trace_rating**, **trace_type**, **resource_id** and
+      **resource_name**.
+      When the key is **api_version**, the value needs to follow the regular constraint: **^ (a-zA-Z0-9_ -.) {1,64}$**.
+      When the key is **code**, the length range of value is from `1` to `256`.
+      When the key is **trace_rating**, the value can be **normal**, **warning** or **incident**.
+      When the key is **trace_type**, the value can be **ConsoleAction**, **ApiCall** or **SystemAction**.
+      When the key is **resource_id**, the length range of value is from `1` to `350`.
+      When the key is **resource_name**, the length range of value is from `1` to `256`.
+    + The **rule** can be: **!=** or **=**.
+
+<a name="CTS_Notification_Operations"></a>
+The `operations` block supports:
+
+* `service_type` - (Required, String) Specifies the cloud service. Every service should be provided separately, the value
+  must be the acronym of a cloud service that has been connected with CTS.
+
+* `resource_type` - (Required, String) Specifies the resource type of custom operation.
+
+* `trace_names` - (Required, List) Specifies the list with trace names of custom operation.
 
 ## Attributes Reference
 

@@ -1,0 +1,4 @@
+---
+enhancements:
+  - |
+    **[CTS]** Add `filter` option for ``resource/opentelekomcloud_cts_event_notification_v3`` (`#2809 <https://github.com/opentelekomcloud/terraform-provider-opentelekomcloud/pull/2809>`_)

@@ -95,25 +95,43 @@ func ResourceCTSEventNotificationV3() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"filter": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"condition": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"rule": {
+							Type:     schema.TypeList,
+							Required: true,
+							MinItems: 1,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
 			"notification_id": {
 				Type:     schema.TypeString,
 				Computed: true,
-				ForceNew: true,
 			},
 			"notification_type": {
 				Type:     schema.TypeString,
 				Computed: true,
-				ForceNew: true,
 			},
 			"project_id": {
 				Type:     schema.TypeString,
 				Computed: true,
-				ForceNew: true,
 			},
 			"create_time": {
 				Type:     schema.TypeFloat,
 				Computed: true,
-				ForceNew: true,
 			},
 		},
 	}
@@ -173,6 +191,32 @@ func resourceCTSUserListV3(d *schema.ResourceData) []keyevent.NotificationUsers 
 	return usersOpts
 }
 
+func buildKeyFilterOpts(d *schema.ResourceData) (*keyevent.Filter, error) {
+	rawFilter := d.Get("filter").([]interface{})
+	if len(rawFilter) == 0 {
+		return nil, nil
+	}
+
+	filterData := rawFilter[0].(map[string]interface{})
+	filter := keyevent.Filter{
+		IsSupportFilter: true,
+		Rule:            common.ExpandToStringList(filterData["rule"].([]interface{})),
+	}
+
+	conditionStr := filterData["condition"].(string)
+	switch conditionStr {
+	case "AND":
+		filter.Condition = "AND"
+	case "OR":
+		filter.Condition = "OR"
+	default:
+		return &filter, fmt.Errorf("invalid condition, want 'AND' or 'OR', but got '%v'", conditionStr)
+	}
+
+	log.Printf("[DEBUG] CTS key events notification filter: %#v", filter)
+	return &filter, nil
+}
+
 func resourceCTSEventNotificationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	config := meta.(*cfg.Config)
 	client, err := config.CtsV3Client(config.GetProjectName(d))
@@ -187,6 +231,12 @@ func resourceCTSEventNotificationCreate(ctx context.Context, d *schema.ResourceD
 		NotifyUserList:   resourceCTSUserListV3(d),
 		TopicId:          d.Get("topic_id").(string),
 	}
+
+	filter, err := buildKeyFilterOpts(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	createOpts.Filter = filter
 
 	ctsN, err := keyevent.Create(client, createOpts)
 	if err != nil {
@@ -235,6 +285,7 @@ func resourceCTSEventNotificationRead(_ context.Context, d *schema.ResourceData,
 		d.Set("project_id", ctsNotification[0].ProjectId),
 		d.Set("create_time", ctsNotification[0].CreateTime),
 		d.Set("status", ctsNotification[0].Status),
+		d.Set("filter", flattenNotificationFilter(&ctsNotification[0].Filter)),
 	)
 	if err := mErr.ErrorOrNil(); err != nil {
 		return fmterr.Errorf("error setting CTS event notifications fields: %w", err)
@@ -267,6 +318,15 @@ func resourceCTSEventNotificationUpdate(ctx context.Context, d *schema.ResourceD
 	}
 
 	eventId, _ := ExtractNotificationID(d.Id())
+
+	if d.HasChange("filter") {
+		filter, err := buildKeyFilterOpts(d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		updateOpts.Filter = filter
+		needsUpdate = true
+	}
 
 	if needsUpdate || d.HasChange("notification_name") || d.HasChange("operation_type") || d.HasChange("status") {
 		updateOpts.NotificationId = eventId
@@ -368,4 +428,16 @@ func validateSchema(_ context.Context, d *schema.ResourceDiff, _ interface{}) er
 	}
 
 	return nil
+}
+
+func flattenNotificationFilter(filter *keyevent.Filter) []map[string]interface{} {
+	if filter == nil {
+		return nil
+	}
+	result := map[string]interface{}{
+		"condition": filter.Condition,
+		"rule":      filter.Rule,
+	}
+
+	return []map[string]interface{}{result}
 }
